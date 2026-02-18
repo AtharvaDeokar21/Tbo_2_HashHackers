@@ -24,10 +24,14 @@ def process_intent(data):
 
     if duration_days <= 0:
         raise ValueError("Invalid dates")
+    origin = data["origin"].upper()
+
+    if origin == "DELHI":
+        origin = "DEL"
 
     trip = Trip(
         customer_id=data["customer_id"],
-        origin=data["origin"].upper(),
+        origin=origin,
         destination=data["destination"],
         departure_date=departure_date,
         return_date=return_date,

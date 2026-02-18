@@ -17,7 +17,7 @@ Extract structured travel data from user input.
 Return ONLY valid JSON in this exact format:
 
 {
-  "origin": "...",
+  "origin": "Iata code of city name",
   "destination": "...",
   "departure_date": "YYYY-MM-DD",
   "return_date": "YYYY-MM-DD",
@@ -27,6 +27,7 @@ Return ONLY valid JSON in this exact format:
 }
 
 Rules:
+- Return airport IATA codes for origin.
 - Convert "1.8 lakhs" → 180000
 - If user says "April" assume reasonable 6-day trip in April 2026
 - If minimal layovers → risk_preference = "Low"

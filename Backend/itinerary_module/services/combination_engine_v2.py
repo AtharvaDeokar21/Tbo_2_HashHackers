@@ -26,8 +26,8 @@ def generate_combinations_v2(flights, hotels, budget):
 
             total_price = flight["price"] + hotel["price"]
 
-            if total_price > budget * 1.2:
-                continue
+            # if total_price > budget * 1.2:
+            #     continue
 
             combinations.append({
                 "flight": flight,

@@ -96,6 +96,10 @@ def generate_itinerary():
 
     combinations = generate_combinations(flights, hotels)
     top_three = rank_itineraries(combinations, structured["budget"])
+    print("Flights count:", len(flights))
+    print("Hotels count:", len(hotels))
+    print("Combinations:", len(combinations))
+    print("Top 3:", len(top_three))
 
     saved = persist_itineraries(structured["trip_id"], top_three)
     for itinerary in saved:
