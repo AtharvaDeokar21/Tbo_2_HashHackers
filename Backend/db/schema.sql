@@ -26,8 +26,9 @@ CREATE TABLE customers (
 CREATE TABLE trips (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
-    origin VARCHAR(10),
-    destination VARCHAR(100),
+    origin_airport VARCHAR(10),
+    destination_airport VARCHAR(10),
+    destination_city VARCHAR(100),
     departure_date DATE,
     return_date DATE,
     duration_days INT,

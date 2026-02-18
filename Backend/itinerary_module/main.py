@@ -16,6 +16,10 @@ from services.price_tracker import record_price_snapshot
 from services.simulation_engine import simulate_change
 from services.intent_agent import extract_intent
 from services.intent_service import process_intent
+from services.decision_agents import run_multi_agent_decision
+from services.query_bot import run_query_bot
+from services.embedding_service import embed_itinerary
+
 
 from config import Config
 from database import db
@@ -82,14 +86,14 @@ def generate_itinerary():
         return jsonify({"error": str(e)}), 400
 
     flights = fetch_flights(
-        structured["origin"],
-        structured["destination"],
+        structured["origin_airport"],
+        structured["destination_airport"],
         structured["departure_date"],
         structured["return_date"]
     )
 
     hotels = fetch_hotels(
-        structured["destination"],
+        structured["destination_city"],
         structured["departure_date"],
         structured["return_date"]
     )
@@ -106,7 +110,7 @@ def generate_itinerary():
         calculate_margin(itinerary.id)
         calculate_risk(itinerary.id)
         update_final_score(itinerary.id)
-
+        embed_itinerary(itinerary.id)
 
     return jsonify({
         "trip_id": structured["trip_id"],
@@ -120,6 +124,19 @@ def generate_itinerary():
             for i in saved
         ]
     })
+
+@app.route("/itinerary/<uuid:itinerary_id>/decision", methods=["GET"])
+def itinerary_decision(itinerary_id):
+
+    details = get_itinerary_details(itinerary_id)
+
+    if not details:
+        return jsonify({"error": "Not found"}), 404
+
+    result = run_multi_agent_decision(details["scores"] | details)
+
+    return jsonify(result)
+
 
 @app.route("/itinerary/<uuid:itinerary_id>", methods=["GET"])
 def fetch_itinerary(itinerary_id):
@@ -163,14 +180,14 @@ def generate_from_text():
     structured = process_intent(structured_intent)
 
     flights = fetch_flights(
-        structured["origin"],
-        structured["destination"],
+        structured["origin_airport"],
+        structured["destination_airport"],
         structured["departure_date"],
         structured["return_date"]
     )
 
     hotels = fetch_hotels(
-        structured["destination"],
+        structured["destination_city"],
         structured["departure_date"],
         structured["return_date"]
     )
@@ -191,6 +208,21 @@ def generate_from_text():
             }
             for i in saved
         ]
+    })
+
+@app.route("/itinerary/<uuid:itinerary_id>/query", methods=["POST"])
+def itinerary_query(itinerary_id):
+
+    data = request.json
+    question = data.get("question")
+
+    if not question:
+        return jsonify({"error": "Question required"}), 400
+
+    response = run_query_bot(str(itinerary_id), question)
+
+    return jsonify({
+        "answer": response
     })
 
 

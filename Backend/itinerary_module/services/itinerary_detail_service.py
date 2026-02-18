@@ -46,8 +46,8 @@ def get_itinerary_details(itinerary_id):
             "inventory_status": hotel.inventory_status if hotel else None
         },
         "trip": {
-            "origin": trip.origin if trip else None,
-            "destination": trip.destination if trip else None,
+            "origin": trip.origin_airport if trip else None,
+            "destination": trip.destination_city if trip else None,
             "departure_date": trip.departure_date.strftime("%Y-%m-%d") if trip else None,
             "return_date": trip.return_date.strftime("%Y-%m-%d") if trip else None,
             "budget": float(trip.budget) if trip and trip.budget else None

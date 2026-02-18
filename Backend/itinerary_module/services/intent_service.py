@@ -6,8 +6,9 @@ def process_intent(data):
 
     required_fields = [
         "customer_id",
-        "origin",
-        "destination",
+        "origin_airport",
+        "destination_airport",
+        "destination_city",
         "departure_date",
         "return_date",
         "budget"
@@ -24,15 +25,14 @@ def process_intent(data):
 
     if duration_days <= 0:
         raise ValueError("Invalid dates")
-    origin = data["origin"].upper()
+    origin = data["origin_airport"].upper()
 
-    if origin == "DELHI":
-        origin = "DEL"
 
     trip = Trip(
         customer_id=data["customer_id"],
-        origin=origin,
-        destination=data["destination"],
+        origin_airport=origin,
+        destination_airport=data["destination_airport"],
+        destination_city=data["destination_city"],
         departure_date=departure_date,
         return_date=return_date,
         duration_days=duration_days,
@@ -45,8 +45,9 @@ def process_intent(data):
 
     return {
         "trip_id": str(trip.id),
-        "origin": trip.origin,
-        "destination": trip.destination,
+        "origin_airport": trip.origin_airport,
+        "destination_airport": trip.destination_airport,
+        "destination_city": trip.destination_city,
         "departure_date": data["departure_date"],
         "return_date": data["return_date"],
         "budget": data["budget"],
