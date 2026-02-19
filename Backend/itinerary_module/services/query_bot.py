@@ -4,15 +4,16 @@ from typing import TypedDict
 from models.chat_memory import ChatMemory
 from langgraph.graph import StateGraph, END
 from database import db
-
+from services.decision_agents import run_multi_agent_decision
 from services.agent_tools import (
     tool_get_itinerary,
     tool_calculate_margin,
     tool_calculate_risk,
     tool_simulate
 )
-
+from services.trip_context_service import get_trip_context
 from services.vector_store import retrieve_similar_context
+from models.trip_plan import TripPlan
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
@@ -31,7 +32,25 @@ def agent_node(state: AgentState):
     related_contexts = retrieve_similar_context(question)
     print("Retrieved Contexts:", related_contexts)
 
-    itinerary_data = tool_get_itinerary(itinerary_id)
+    trip_context = get_trip_context(itinerary_id)
+    if not trip_context:
+        return {"response": "Itinerary not found."}
+
+    itinerary_data = trip_context["selected"]
+
+    
+    trip_plan = None
+    if trip_context and trip_context.get("selected"):
+        trip_plan_record = TripPlan.query.filter_by(
+            trip_id=trip_context["selected"]["trip_id"]
+        ).first()
+
+        if trip_plan_record:
+            trip_plan = trip_plan_record.structured_plan
+    
+    is_plan_query = any(word in question.lower() for word in [
+        "day", "plan", "schedule", "activity", "itinerary for day"
+    ])
 
     # Tool routing
     if any(word in question.lower() for word in ["what if", "upgrade", "change", "modify"]):
@@ -54,6 +73,7 @@ def agent_node(state: AgentState):
     conversation_history = ""
     for m in memory:
         conversation_history += f"{m.role}: {m.message}\n"
+    debate = run_multi_agent_decision(itinerary_data)
 
     prompt = f"""
 You are a grounded itinerary assistant.
@@ -61,23 +81,39 @@ You are a grounded itinerary assistant.
 Itinerary Data:
 {itinerary_data}
 
+Trip Context:
+Selected Option:
+{trip_context["selected"]}
+
+All Available Options:
+{trip_context["all_options"]}
+
+Day-wise Trip Plan:
+{trip_plan}
+
 Related Context:
 {related_contexts}
 
 Conversation History:
 {conversation_history}
 
+Multi-Agent Debate Output:
+{debate}
+
 User Question:
 {question}
 
 Rules:
-- Use itinerary data only
-- Do NOT hallucinate
+- Use itinerary data and trip plan only.
+- Do NOT hallucinate.
 - If risk question → explain using layover, volatility, and inventory signals.
+- If margin question → explain profitability implications.
+- If simulation requested → explain simulation result.
+- If decision explanation requested → use multi-agent reasoning.
+- If comparison requested → use trip context.
+- If day-specific question → use the Day-wise Trip Plan strictly.
 - Be analytical, not minimal.
-- If margin question → explain margin
-- If simulation requested → explain simulation result
-- Stay factual
+- Stay factual.
 """
 
     response = client.models.generate_content(

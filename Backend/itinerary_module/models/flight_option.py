@@ -10,10 +10,30 @@ class FlightOption(db.Model):
 
     airline = db.Column(db.String(100))
     flight_number = db.Column(db.String(50))
+
+    departure_airport = db.Column(db.String(10))
+    arrival_airport = db.Column(db.String(10))
+
     departure_time = db.Column(db.DateTime)
     arrival_time = db.Column(db.DateTime)
-    layover_minutes = db.Column(db.Integer)
+
+    travel_class = db.Column(db.String(50))
+    aircraft = db.Column(db.String(100))
+    legroom = db.Column(db.String(50))
+
+    duration_minutes = db.Column(db.Integer)
+
+    layover_count = db.Column(db.Integer)
+    max_layover_minutes = db.Column(db.Integer)
+    overnight_layover = db.Column(db.Boolean)
+
+    carbon_emissions = db.Column(db.Integer)
+    emission_delta_percent = db.Column(db.Float)
+
+    booking_token = db.Column(db.Text)
+
     price = db.Column(db.Numeric)
     volatility_indicator = db.Column(db.String(50))
 
     itinerary = db.relationship("Itinerary", backref="flight_option")
+

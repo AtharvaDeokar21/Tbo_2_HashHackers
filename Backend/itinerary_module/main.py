@@ -19,6 +19,9 @@ from services.intent_service import process_intent
 from services.decision_agents import run_multi_agent_decision
 from services.query_bot import run_query_bot
 from services.embedding_service import embed_itinerary
+from services.trip_plan_generator import generate_trip_plan
+from models.trip_plan import TripPlan
+
 
 
 from config import Config
@@ -111,6 +114,34 @@ def generate_itinerary():
         calculate_risk(itinerary.id)
         update_final_score(itinerary.id)
         embed_itinerary(itinerary.id)
+    # Generate trip-level day-wise plan (only once)
+    existing_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
+
+    if not existing_plan:
+
+        trip_details = {
+            "destination_city": structured["destination_city"],
+            "departure_date": structured["departure_date"],
+            "return_date": structured["return_date"],
+            "travel_style": structured.get("travel_style", "Standard"),
+            "budget": structured["budget"],
+            "risk_preference": structured.get("risk_preference", "Medium")
+        }
+
+        try:
+            plan_json = generate_trip_plan(trip_details)
+
+            trip_plan = TripPlan(
+                trip_id=structured["trip_id"],
+                structured_plan=plan_json
+            )
+
+            db.session.add(trip_plan)
+            db.session.commit()
+
+        except Exception as e:
+            print("Trip plan generation failed:", e)
+    trip_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
 
     return jsonify({
         "trip_id": structured["trip_id"],
@@ -122,7 +153,8 @@ def generate_itinerary():
                 "confidence_score": float(i.confidence_score)
             }
             for i in saved
-        ]
+        ],
+        "day_wise_plan": trip_plan.structured_plan if trip_plan else None
     })
 
 @app.route("/itinerary/<uuid:itinerary_id>/decision", methods=["GET"])
@@ -145,8 +177,13 @@ def fetch_itinerary(itinerary_id):
 
     if not result:
         return jsonify({"error": "Itinerary not found"}), 404
+    
+    trip_plan = TripPlan.query.filter_by(trip_id=result["trip_id"]).first()
+
+    result["day_wise_plan"] = trip_plan.structured_plan if trip_plan else None
 
     return jsonify(result)
+
 
 @app.route("/itinerary/<uuid:itinerary_id>/simulate", methods=["POST"])
 def simulate_itinerary(itinerary_id):
@@ -196,7 +233,39 @@ def generate_from_text():
     top_three = rank_itineraries(combinations, structured["budget"])
 
     saved = persist_itineraries(structured["trip_id"], top_three)
+    for itinerary in saved:
+        calculate_margin(itinerary.id)
+        calculate_risk(itinerary.id)
+        update_final_score(itinerary.id)
+        embed_itinerary(itinerary.id)
+    # Generate trip-level day-wise plan (only once)
+    existing_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
 
+    if not existing_plan:
+
+        trip_details = {
+            "destination_city": structured["destination_city"],
+            "departure_date": structured["departure_date"],
+            "return_date": structured["return_date"],
+            "travel_style": structured.get("travel_style", "Standard"),
+            "budget": structured["budget"],
+            "risk_preference": structured.get("risk_preference", "Medium")
+        }
+
+        try:
+            plan_json = generate_trip_plan(trip_details)
+
+            trip_plan = TripPlan(
+                trip_id=structured["trip_id"],
+                structured_plan=plan_json
+            )
+
+            db.session.add(trip_plan)
+            db.session.commit()
+
+        except Exception as e:
+            print("Trip plan generation failed:", e)
+    trip_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
     return jsonify({
         "trip_id": structured["trip_id"],
         "structured_intent": structured_intent,
@@ -207,7 +276,8 @@ def generate_from_text():
                 "final_score": float(i.final_score)
             }
             for i in saved
-        ]
+        ],
+        "day_wise_plan": trip_plan.structured_plan if trip_plan else None
     })
 
 @app.route("/itinerary/<uuid:itinerary_id>/query", methods=["POST"])

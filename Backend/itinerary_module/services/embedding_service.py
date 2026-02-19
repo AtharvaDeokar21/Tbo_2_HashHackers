@@ -15,7 +15,7 @@ def embed_itinerary(itinerary_id):
     Margin: {details['margin_band']}
     Tradeoff: {details['tradeoff_summary']}
     Hotel: {details['hotel']['name']} ({details['hotel']['rating']})
-    Flight: {details['flight']['airline']} with {details['flight']['layover_minutes']} min layover
+    Flight: {details['flight']['airline']} with {details['flight']['max_layover_minutes']} min layover
     """
 
 
