@@ -42,15 +42,12 @@ from models.hotel_option import HotelOption
 from models.margin_snapshot import MarginSnapshot
 from models.risk_snapshot import RiskSnapshot
 from models.price_history import PriceHistory
-
+from database import db
 with app.app_context():
     db.create_all()
 
 @app.route("/seed", methods=["POST"])
 def seed_data():
-    from models.agent import Agent
-    from models.customer import Customer
-    from database import db
 
     agent = Agent(
         name="Test Agent",
@@ -76,6 +73,95 @@ def seed_data():
         "agent_id": str(agent.id),
         "customer_id": str(customer.id)
     }
+@app.route("/agents", methods=["POST"])
+def create_agent():
+
+    data = request.json
+
+    if not data.get("name") or not data.get("email"):
+        return jsonify({"error": "Name and email required"}), 400
+
+    # Check duplicate email
+    existing = Agent.query.filter_by(email=data["email"]).first()
+    if existing:
+        return jsonify({"error": "Agent already exists"}), 400
+
+    agent = Agent(
+        name=data["name"],
+        email=data["email"],
+        phone=data.get("phone"),
+        agency_name=data.get("agency_name"),
+        city=data.get("city")
+    )
+
+    db.session.add(agent)
+    db.session.commit()
+
+    return jsonify({
+        "agent_id": str(agent.id),
+        "message": "Agent created successfully"
+    }), 201
+
+@app.route("/customers", methods=["POST"])
+def create_customer():
+
+    data = request.json
+
+    if not data.get("agent_id") or not data.get("name"):
+        return jsonify({"error": "agent_id and name required"}), 400
+
+    agent = Agent.query.get(data["agent_id"])
+    if not agent:
+        return jsonify({"error": "Invalid agent_id"}), 400
+
+    customer = Customer(
+        agent_id=agent.id,
+        name=data["name"],
+        email=data.get("email"),
+        phone=data.get("phone"),
+        source_city=data.get("source_city"),
+        budget_range=data.get("budget_range"),
+        risk_preference=data.get("risk_preference")
+    )
+
+    db.session.add(customer)
+    db.session.commit()
+
+    return jsonify({
+        "customer_id": str(customer.id),
+        "message": "Customer created successfully"
+    }), 201
+
+@app.route("/agents", methods=["GET"])
+def list_agents():
+
+    agents = Agent.query.all()
+
+    return jsonify([
+        {
+            "agent_id": str(a.id),
+            "name": a.name,
+            "email": a.email,
+            "agency_name": a.agency_name,
+            "city": a.city
+        }
+        for a in agents
+    ])
+
+@app.route("/agents/<uuid:agent_id>/customers", methods=["GET"])
+def list_customers(agent_id):
+
+    customers = Customer.query.filter_by(agent_id=agent_id).all()
+
+    return jsonify([
+        {
+            "customer_id": str(c.id),
+            "name": c.name,
+            "email": c.email,
+            "risk_preference": c.risk_preference
+        }
+        for c in customers
+    ])
 
 
 @app.route("/generate-itinerary", methods=["POST"])
