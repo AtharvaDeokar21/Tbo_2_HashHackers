@@ -37,6 +37,13 @@ def fetch_hotels(destination, check_in, check_out):
         if property.get("extracted_price"):
             price = property.get("extracted_price", price)
 
+        images = property.get("images", [])
+        image_url = None
+
+        if images:
+            first_image = images[0]
+            image_url = first_image.get("original_image") or first_image.get("thumbnail")
+
         hotels.append({
             "name": property.get("name"),
             "price_per_night": price,
@@ -44,7 +51,7 @@ def fetch_hotels(destination, check_in, check_out):
             "rating": property.get("overall_rating", 0),
             "reviews": property.get("reviews", 0),
             "hotel_class": property.get("hotel_class", None),
-            "image_url": property.get("thumbnail"),
+            "image_url": image_url,
             "latitude": property.get("gps_coordinates", {}).get("latitude"),
             "longitude": property.get("gps_coordinates", {}).get("longitude"),
             "amenities": property.get("amenities", []),
