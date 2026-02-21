@@ -6,8 +6,8 @@ import { ChevronRight, LayoutDashboard, Package, Megaphone, Users, BarChart3, Gl
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/' },
-  { id: 'builder', label: 'Package Builder', icon: Package, href: '/builder' },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+  { id: 'builder', label: 'AI Builder', icon: Package, href: '/ai-builder' },
   { id: 'campaigns', label: 'Campaigns', icon: Megaphone, href: '/campaigns' },
   { id: 'leads', label: 'Leads', icon: Users, href: '/leads' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/analytics' },
