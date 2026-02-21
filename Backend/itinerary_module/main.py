@@ -21,6 +21,7 @@ from services.query_bot import run_query_bot
 from services.embedding_service import embed_itinerary
 from services.trip_plan_generator import generate_trip_plan
 from models.trip_plan import TripPlan
+from sqlalchemy import func
 from flask_cors import CORS
 
 
@@ -135,17 +136,26 @@ def create_customer():
 @app.route("/agents", methods=["GET"])
 def list_agents():
 
-    agents = Agent.query.all()
+    agents_with_counts = (
+        db.session.query(
+            Agent,
+            func.count(Customer.id).label("customer_count")
+        )
+        .outerjoin(Customer, Agent.id == Customer.agent_id)
+        .group_by(Agent.id)
+        .all()
+    )
 
     return jsonify([
         {
-            "agent_id": str(a.id),
-            "name": a.name,
-            "email": a.email,
-            "agency_name": a.agency_name,
-            "city": a.city
+            "agent_id": str(agent.id),
+            "name": agent.name,
+            "email": agent.email,
+            "agency_name": agent.agency_name,
+            "city": agent.city,
+            "customer_count": customer_count
         }
-        for a in agents
+        for agent, customer_count in agents_with_counts
     ])
 
 @app.route("/agents/<uuid:agent_id>/customers", methods=["GET"])
