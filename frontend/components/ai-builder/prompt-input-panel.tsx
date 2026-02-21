@@ -32,6 +32,7 @@ export function PromptInputPanel({ onGenerate, isLoading }: PromptInputPanelProp
 
   const handleSubmit = () => {
     if (prompt.trim()) {
+      localStorage.setItem("lastPrompt", prompt) // save user's prompt
       onGenerate(prompt)
       setPrompt('')
     }

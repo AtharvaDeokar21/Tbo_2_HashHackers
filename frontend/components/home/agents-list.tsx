@@ -34,7 +34,7 @@ export function AgentsList({ onSelectAgent }: AgentsListProps) {
           name: a.name,
           email: a.email,
           title: a.agency_name ?? "Travel Agent",
-          customersCount: 0,   // backend does not send this → set default
+          customersCount: a.customer_count,   // backend does not send this → set default
           image: null,         // backend does not send image → optional
         }))
 

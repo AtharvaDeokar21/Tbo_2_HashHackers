@@ -14,7 +14,7 @@ interface Message {
 }
 
 interface QueryBotProps {
-  itinerary: any
+  itinerary: any   // contains itinerary.id
 }
 
 const QUICK_QUESTIONS = [
@@ -22,7 +22,7 @@ const QUICK_QUESTIONS = [
   'What should I pack?',
   'What are the best restaurants?',
   'Are there any visa requirements?',
-  'What\'s the weather like?',
+  "What's the weather like?",
 ]
 
 export function QueryBot({ itinerary }: QueryBotProps) {
@@ -39,40 +39,52 @@ export function QueryBot({ itinerary }: QueryBotProps) {
   const handleSendMessage = async () => {
     if (!input.trim()) return
 
-    // Add user message
+    // append user message
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
       content: input,
     }
-    setMessages((prev) => [...prev, userMessage])
+    setMessages(prev => [...prev, userMessage])
+
+    const questionText = input
     setInput('')
     setIsLoading(true)
 
-    // Simulate bot response
-    setTimeout(() => {
-      const responses: { [key: string]: string } = {
-        "What's the highlight of this trip?":
-          "The highlight of this trip is definitely the mix of cultural experiences and beach relaxation. You'll get to explore ancient temples, enjoy local cuisine, and have plenty of time to relax on pristine beaches. The sunset at Tanah Lot is particularly spectacular!",
-        'What should I pack?':
-          'For Bali in July, pack light, breathable clothing, sunscreen (SPF 50+), a hat, sunglasses, comfortable walking shoes, and casual evening wear. Since July is the dry season, you won\'t need rain gear. Don\'t forget your passport and travel insurance documents!',
-        'What are the best restaurants?':
-          'Bali offers fantastic dining options ranging from local warungs to fine dining. We\'ve included recommendations for authentic Balinese cuisine, international restaurants, and beachfront dining. Your hotel concierge can also provide current recommendations.',
-        'Are there any visa requirements?':
-          'Most nationalities can get a 30-day Visa on Arrival (VoA) at Indonesian airports. You\'ll need a valid passport (6+ months validity), return ticket, and proof of funds. We recommend checking with your nearest Indonesian embassy for specific requirements.',
-      }
+    try {
+      // 👉 REAL BACKEND CALL
+      const res = await fetch(
+        `http://localhost:5000/itinerary/${itinerary.id}/query`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: questionText }),
+        }
+      )
 
-      const botResponse: Message = {
+      const data = await res.json()
+
+      const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content:
-          responses[input] ||
-          `That's a great question about "${input.split('?')[0]}". This is something I'd recommend discussing with our travel specialist for more personalized advice. Is there anything else I can help you with about this itinerary?`,
+        content: data.answer || 'Sorry, I could not fetch the answer.',
       }
 
-      setMessages((prev) => [...prev, botResponse])
-      setIsLoading(false)
-    }, 1000)
+      setMessages(prev => [...prev, botMessage])
+
+    } catch (error) {
+      console.error('QueryBot Error:', error)
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          type: 'bot',
+          content: 'Something went wrong while contacting the server. Try again!',
+        },
+      ])
+    }
+
+    setIsLoading(false)
   }
 
   const handleQuickQuestion = (question: string) => {
@@ -80,7 +92,7 @@ export function QueryBot({ itinerary }: QueryBotProps) {
   }
 
   return (
-    <Card className="overflow-hidden flex flex-col h-[600px] sticky top-20 border-l-4 border-l-primary">
+    <Card className="overflow-hidden flex flex-col h-[750px] sticky top-20 border-l-4 border-l-primary">
       {/* Header */}
       <div className="bg-primary/5 border-b border-border p-4">
         <div className="flex items-center gap-2">
@@ -94,7 +106,7 @@ export function QueryBot({ itinerary }: QueryBotProps) {
         </div>
       </div>
 
-      {/* Messages Area */}
+      {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message) => (
@@ -103,18 +115,20 @@ export function QueryBot({ itinerary }: QueryBotProps) {
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.type === 'user'
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  message.type === 'user'
                     ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                     : 'bg-background border border-border text-foreground'
-                  }`}
+                }`}
               >
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm whitespace-pre-line">{message.content}</p>
               </div>
             </div>
           ))}
+
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-background border border-border text-foreground px-4 py-2 rounded-lg">
+              <div className="bg-background border border-border px-4 py-2 rounded-lg">
                 <div className="flex gap-1">
                   <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
                   <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
@@ -144,7 +158,7 @@ export function QueryBot({ itinerary }: QueryBotProps) {
         </div>
       )}
 
-      {/* Input Area */}
+      {/* Input */}
       <div className="border-t border-border p-4 space-y-2">
         <div className="flex gap-2">
           <Input
