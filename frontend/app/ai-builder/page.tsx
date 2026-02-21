@@ -7,6 +7,7 @@ import { DashboardWrapper } from '@/components/layout/dashboard-wrapper'
 import { PromptInputPanel } from '@/components/ai-builder/prompt-input-panel'
 import { ItineraryComparison } from '@/components/ai-builder/itinerary-comparison'
 import { ItineraryDetail } from '@/components/ai-builder/itinerary-detail'
+import { fi } from 'date-fns/locale'
 
 export interface DayPlan {
   day: number
@@ -29,6 +30,7 @@ export interface Itinerary {
   dayByDay: DayPlan[]
   destination?: string
   image?: string
+  final_score?: number
 }
 
 export interface FlightInfo {
@@ -55,6 +57,15 @@ export interface HotelInfo {
   nights: number
   amenities: string[]
   image?: string
+
+  // 🔥 NEW FIELDS FROM BACKEND
+  reviews?: number
+  hotel_class?: string
+  inventory_status?: string
+  check_in?: string
+  check_out?: string
+  latitude?: number
+  longitude?: number
 }
 
 export default function AIBuilder() {
@@ -118,6 +129,7 @@ export default function AIBuilder() {
           notes: d.notes,
           activities: d.activities,
         })) || [],
+        final_score: it.final_score,
       }));
 
       setItineraries(mappedItineraries);

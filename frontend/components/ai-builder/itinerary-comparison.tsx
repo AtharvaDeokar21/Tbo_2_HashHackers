@@ -70,26 +70,16 @@ export function ItineraryComparison({ itineraries, onSelectItinerary }: Itinerar
             className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-border"
           >
             {/* Type Header Bar */}
-            <div className={`h-1 ${
-              itinerary.type === 'best-match' ? 'bg-primary' :
+            <div className={`h-1 ${itinerary.type === 'best-match' ? 'bg-primary' :
               itinerary.type === 'best-budget' ? 'bg-primary/60' :
-              'bg-primary/40'
-            }`} />
+                'bg-primary/40'
+              }`} />
 
             {/* Content */}
             <div className="p-6 space-y-4">
               {/* Badge and Title */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  {getTypeIcon(itinerary.type)}
-                  <Badge className={`text-xs font-semibold border-0 ${
-                    itinerary.type === 'best-match' ? 'bg-primary/8 text-primary' :
-                    itinerary.type === 'best-budget' ? 'bg-primary/6 text-primary/80' :
-                    'bg-primary/5 text-primary/70'
-                  }`}>
-                    {getTypeLabel(itinerary.type)}
-                  </Badge>
-                </div>
+
                 <div>
                   <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{itinerary.title}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{itinerary.description}</p>
@@ -98,16 +88,16 @@ export function ItineraryComparison({ itineraries, onSelectItinerary }: Itinerar
 
               {/* Rating */}
               <div className="flex items-center gap-2 pt-1">
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      className={i < Math.floor(itinerary.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}
-                    />
-                  ))}
+                <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary"
+                    style={{ width: `${(itinerary.final_score ?? 0) * 100}%` }}
+                  />
                 </div>
-                <span className="text-sm font-semibold text-foreground">{itinerary.rating.toFixed(1)}</span>
+
+                <span className="text-sm font-semibold text-foreground">
+                  {(itinerary.final_score * 100).toFixed(0)}%
+                </span>
               </div>
 
               {/* Price and Duration Section */}
@@ -119,34 +109,14 @@ export function ItineraryComparison({ itineraries, onSelectItinerary }: Itinerar
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <p className="text-xs text-muted-foreground font-semibold mb-1">PRICE</p>
-                  <p className="text-lg font-bold text-primary">${(itinerary.price / 1000).toFixed(1)}k</p>
+                  <p className="text-lg font-bold text-primary">
+                    ₹{itinerary.price.toLocaleString('en-IN')}
+                  </p>
                   <p className="text-xs text-muted-foreground">total</p>
                 </div>
               </div>
 
-              {/* Highlights as Pills */}
-              <div className="space-y-2 pt-2">
-                <p className="text-xs text-muted-foreground font-semibold uppercase">Highlights</p>
-                <div className="flex flex-wrap gap-2">
-                  {itinerary.highlights.slice(0, 3).map((highlight, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs font-normal">
-                      {highlight}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
 
-              {/* Flights & Hotels Quick Stats */}
-              <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                <div className="flex-1 text-center border-r border-border/50">
-                  <p className="text-sm font-bold text-foreground">{itinerary.flights.length}</p>
-                  <p className="text-xs text-muted-foreground">Flight{itinerary.flights.length !== 1 ? 's' : ''}</p>
-                </div>
-                <div className="flex-1 text-center">
-                  <p className="text-sm font-bold text-foreground">{itinerary.hotels.length}</p>
-                  <p className="text-xs text-muted-foreground">Hotel{itinerary.hotels.length !== 1 ? 's' : ''}</p>
-                </div>
-              </div>
             </div>
 
             {/* CTA Button */}

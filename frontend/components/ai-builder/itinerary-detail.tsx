@@ -82,9 +82,16 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
     location: fullData.trip.destination,
     rating: fullData.hotel.rating,
     price: fullData.hotel.price,
-    nights:  fullData.day_wise_plan?.days?.length || 1,
+    nights: fullData.day_wise_plan?.days?.length || 1,
     amenities: fullData.hotel.amenities || [],
-    image: fullData.hotel.image_url
+    image: fullData.hotel.image_url,
+    latitude: Number(fullData.hotel.latitude),
+    longitude: Number(fullData.hotel.longitude),
+    check_in: fullData.hotel.check_in,
+    check_out: fullData.hotel.check_out,
+    hotel_class: fullData.hotel.hotel_class,
+    reviews: fullData.hotel.reviews,
+    inventory_status: fullData.hotel.inventory_status
   }] : []
 
   const dayByDay: DayPlan[] = fullData.day_wise_plan?.days?.map((d: any) => ({
@@ -126,10 +133,10 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           </div>
         )}
-        
+
         <div className="p-8 space-y-6">
           <div className="flex items-start justify-between gap-4 flex-wrap">
-            
+
             {/* LEFT SECTION */}
             <div className="space-y-3 flex-1">
               <Badge className="bg-primary/20 text-primary border-0 font-semibold">
@@ -144,20 +151,51 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
                   <p className="text-xs text-muted-foreground uppercase">Duration</p>
                   <p className="text-lg font-bold">{fullItinerary.duration} days</p>
                 </div>
+
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Rating</p>
-                  <div className="flex items-center gap-1">
-                    <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                    <span className="font-bold">{fullItinerary.rating.toFixed(1)}</span>
-                  </div>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">Final Score</p>
+                  <p className="text-lg font-bold text-primary">
+                    {(fullData.scores?.final_score * 100).toFixed(0)}%
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">Comfort</p>
+                  <p className="text-lg font-bold">
+                    {(fullData.scores?.comfort_score * 100).toFixed(0)}%
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">Confidence</p>
+                  <p className="text-lg font-bold">
+                    {(fullData.scores?.confidence_score * 100).toFixed(0)}%
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Highlights</p>
-                  <p className="text-lg font-bold">{fullItinerary.highlights.length}</p>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">Margin Score</p>
+                  <p className="text-lg font-bold">
+                    {(fullData.scores?.margin_score * 100).toFixed(0)}%
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">Risk Level</p>
+                  <Badge
+                    className={
+                      fullData.risk_level === 'Low'
+                        ? 'bg-green-100 text-green-700'
+                        : fullData.risk_level === 'Medium'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-red-100 text-red-700'
+                    }
+                  >
+                    {fullData.risk_level}
+                  </Badge>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground uppercase">Package</p>
-                  <p className="text-lg font-bold text-primary">${fullItinerary.price.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-primary">₹{fullItinerary.price.toLocaleString('en-IN')}</p>
                 </div>
               </div>
 
@@ -173,7 +211,7 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
             {/* RIGHT SECTION */}
             <div className="text-right space-y-4">
               <p className="text-xs text-muted-foreground uppercase">Total Price</p>
-              <p className="text-4xl font-bold text-primary">${fullItinerary.price.toLocaleString()}</p>
+              <p className="text-4xl font-bold text-primary">₹{fullItinerary.price.toLocaleString('en-IN')}</p>
 
               <Button size="sm" className="gap-2">
                 <Download size={16} />
@@ -196,7 +234,7 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
 
         {/* LEFT COLUMN */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Summary Cards */}
           <div className="grid grid-cols-2 gap-4">
             <Card className="p-4 border-l-4 border-l-blue-500">

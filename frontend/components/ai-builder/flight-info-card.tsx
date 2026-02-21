@@ -75,7 +75,7 @@ export function FlightInfoCard({ flight }: FlightInfoCardProps) {
       <div className="flex items-center justify-between pt-2 border-t">
         <div>
           <p className="text-xs text-muted-foreground">Price per person</p>
-          <p className="text-2xl font-bold text-blue-600">${flight.price.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-blue-600">₹{flight.price.toLocaleString('en-IN')}</p>
         </div>
         <Button className="bg-blue-600 hover:bg-blue-700">
           Book Flight
