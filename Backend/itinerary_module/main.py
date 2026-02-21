@@ -21,7 +21,7 @@ from services.query_bot import run_query_bot
 from services.embedding_service import embed_itinerary
 from services.trip_plan_generator import generate_trip_plan
 from models.trip_plan import TripPlan
-
+from flask_cors import CORS
 
 
 from config import Config
@@ -29,7 +29,7 @@ from database import db
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
+CORS(app)
 db.init_app(app)
 
 # Import models AFTER db init
