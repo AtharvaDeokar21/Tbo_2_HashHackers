@@ -7,31 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MapPin, Star, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react'
 import type { HotelInfo } from '@/app/ai-builder/page'
-import '@/components/ai-builder/leaflet-fix'
+import { LeafletMap } from "./LeafletMap"
 
-const MapContainer = dynamic(
-  () =>
-    import("react-leaflet").then((mod) => {
-      return mod.MapContainer
-    }),
-  { ssr: false }
-)
-
-const TileLayer = dynamic(
-  () =>
-    import("react-leaflet").then((mod) => {
-      return mod.TileLayer
-    }),
-  { ssr: false }
-)
-
-const Marker = dynamic(
-  () =>
-    import("react-leaflet").then((mod) => {
-      return mod.Marker
-    }),
-  { ssr: false }
-)
 
 export function HotelInfoCard({ hotel }: { hotel: HotelInfo }) {
   const [showAllAmenities, setShowAllAmenities] = useState(false)
@@ -155,21 +132,7 @@ export function HotelInfoCard({ hotel }: { hotel: HotelInfo }) {
 
         {/* Map */}
         {hotel.latitude && hotel.longitude && (
-          <div className="rounded-lg overflow-hidden border h-56 relative z-0">
-            <MapContainer
-              center={[hotel.latitude, hotel.longitude]}
-              zoom={15}
-              scrollWheelZoom={false}
-              style={{ height: '100%', width: '100%' }}
-              className="z-0"
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="© OpenStreetMap contributors"
-              />
-              <Marker position={[hotel.latitude, hotel.longitude]} />
-            </MapContainer>
-          </div>
+          <LeafletMap lat={hotel.latitude} lng={hotel.longitude} />
         )}
 
         {/* Price + CTA */}

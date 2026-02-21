@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Send, MessageCircle } from 'lucide-react'
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface Message {
   id: string
@@ -14,7 +16,7 @@ interface Message {
 }
 
 interface QueryBotProps {
-  itinerary: any   // contains itinerary.id
+  itinerary: any
 }
 
 const QUICK_QUESTIONS = [
@@ -36,10 +38,17 @@ export function QueryBot({ itinerary }: QueryBotProps) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  // NEW: ref for auto scroll
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    // Auto scroll to bottom
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, isLoading])
+
   const handleSendMessage = async () => {
     if (!input.trim()) return
 
-    // append user message
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -52,7 +61,6 @@ export function QueryBot({ itinerary }: QueryBotProps) {
     setIsLoading(true)
 
     try {
-      // 👉 REAL BACKEND CALL
       const res = await fetch(
         `http://localhost:5000/itinerary/${itinerary.id}/query`,
         {
@@ -73,7 +81,6 @@ export function QueryBot({ itinerary }: QueryBotProps) {
       setMessages(prev => [...prev, botMessage])
 
     } catch (error) {
-      console.error('QueryBot Error:', error)
       setMessages(prev => [
         ...prev,
         {
@@ -93,6 +100,7 @@ export function QueryBot({ itinerary }: QueryBotProps) {
 
   return (
     <Card className="overflow-hidden flex flex-col h-[750px] sticky top-20 border-l-4 border-l-primary">
+
       {/* Header */}
       <div className="bg-primary/5 border-b border-border p-4">
         <div className="flex items-center gap-2">
@@ -106,9 +114,10 @@ export function QueryBot({ itinerary }: QueryBotProps) {
         </div>
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+      {/* ⭐ NEW — Dedicated Scroll Area ONLY for messages */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto px-4 py-4 space-y-4">
+
           {messages.map((message) => (
             <div
               key={message.id}
@@ -121,7 +130,11 @@ export function QueryBot({ itinerary }: QueryBotProps) {
                     : 'bg-background border border-border text-foreground'
                 }`}
               >
-                <p className="text-sm whitespace-pre-line">{message.content}</p>
+                <div className="text-sm prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           ))}
@@ -137,8 +150,10 @@ export function QueryBot({ itinerary }: QueryBotProps) {
               </div>
             </div>
           )}
+
+          <div ref={scrollRef} /> {/* Auto-scroll anchor */}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Quick Questions */}
       {messages.length === 1 && (
@@ -179,6 +194,7 @@ export function QueryBot({ itinerary }: QueryBotProps) {
           </Button>
         </div>
       </div>
+
     </Card>
   )
 }
