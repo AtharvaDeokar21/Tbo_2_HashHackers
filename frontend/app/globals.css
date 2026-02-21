@@ -127,3 +127,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+.leaflet-container {
+  width: 100%;
+  height: 200px;
+  border-radius: 0.5rem;
+}
