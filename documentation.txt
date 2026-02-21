@@ -1,0 +1,313 @@
+
+🧠 TBO AI Campaign Intelligence Engine
+Hybrid Trend → Target → Creative → Asset System
+
+1️⃣ System Overview
+This system enables travel agents to:
+Detect trending destinations
+Identify high-value customer segments
+Generate structured campaign strategy
+Fetch destination-accurate visuals
+Apply personalized overlays
+Store and serve creative assets via API
+The architecture is:
+Trend Intelligence
+        ↓
+Targeting Engine
+        ↓
+Campaign Builder (Content + Positioning)
+        ↓
+Creative Engine (Hybrid Image Fetch + Overlay)
+        ↓
+Cloudinary Storage
+        ↓
+Postgres Persistence
+        ↓
+Flask API Endpoints
+
+
+2️⃣ High-Level Architecture
+Frontend / Dashboard
+        ↓
+Flask API Layer
+        ↓
+Business Modules
+        ↓
+External APIs (SerpAPI, Pexels, Groq)
+        ↓
+Postgres Database
+        ↓
+Cloudinary Storage
+
+
+3️⃣ Core Modules
+
+🔥 A. Trend Intelligence Engine
+Purpose:
+Calculate a demand score for a destination using multiple signals.
+Signals Used:
+Booking surge %
+Search spike %
+Price change %
+Volatility index
+Momentum indicator
+Output:
+{
+  "destination": "Dubai",
+  "booking_surge_percent": 18.4,
+  "search_spike_percent": 22.1,
+  "avg_price_change_percent": -3.2,
+  "volatility_index": 0.34,
+  "momentum_indicator": "Rising",
+  "final_score": 0.62
+}
+
+Logic:
+Weighted scoring model combining normalized demand metrics.
+
+🎯 B. Targeting Engine
+Purpose:
+Identify highest-value audience segment for that destination.
+Inputs:
+customer_rfm_scores
+customer_engagement
+past itinerary interactions
+Output:
+[
+  {
+    "segment": "High Value",
+    "score": 0.87
+  },
+  {
+    "segment": "Family",
+    "score": 0.64
+  }
+]
+
+Logic:
+Weighted scoring using:
+Recency
+Frequency
+Monetary value
+Engagement rate
+Destination affinity
+
+📦 C. Campaign Builder
+Purpose:
+Generate structured marketing plan.
+Output:
+{
+  "positioning_angle": "Skyline Luxury Experience",
+  "content_plan": {
+    "headline": "...",
+    "subtext": "...",
+    "cta": "..."
+  }
+}
+
+Uses Groq LLM for:
+Positioning narrative
+Campaign messaging structure
+Tone personalization
+
+🖼 D. Creative Engine (Hybrid Visual System)
+1️⃣ AI Query Composer
+Uses Groq to generate optimized search keywords.
+Example output:
+Dubai Burj Khalifa skyline luxury villa infinity pool sunset high resolution landscape photography
+
+
+2️⃣ Hybrid Image Fetcher
+Priority:
+SerpAPI Google Images
+Pexels API fallback
+Filters:
+Min resolution 800x600
+Landscape only
+No watermark
+No portrait orientation
+
+3️⃣ Premium Overlay System
+Features:
+Soft gradient bottom fade
+Hierarchical typography
+Wrapped text
+Gold CTA button
+Dynamic spacing
+Image-preserving layout
+Output:
+High-end ad-ready creative.
+
+☁️ E. Cloudinary Storage
+Uploads:
+campaign_assets/campaign_uuid.png
+
+Returns:
+{
+  "secure_url": "https://res.cloudinary.com/...png"
+}
+
+
+🗄 F. Database Persistence
+Tables Used:
+campaigns
+campaign_assets
+demand_signals
+customer_rfm_scores
+customer_engagement
+Each campaign launch:
+Updates demand_signals
+Inserts campaign
+Inserts campaign_assets
+
+4️⃣ Full Execution Flow
+When launching a campaign:
+POST /api/campaign/launch
+        ↓
+update_demand_signal()
+        ↓
+get_top_targets()
+        ↓
+build_campaign_package()
+        ↓
+build_creative()
+        ↓
+store_final_creative()
+        ↓
+Return JSON response
+
+
+5️⃣ API Endpoints
+
+1️⃣ Get Trend Data
+Endpoint:
+GET /api/trend/<destination>
+
+Example:
+GET /api/trend/Dubai
+
+Response:
+{
+  "destination": "Dubai",
+  "trend_score": 0.62,
+  "raw_data": {
+    "booking_surge_percent": 18.4,
+    "search_spike_percent": 22.1,
+    "volatility_index": 0.34,
+    "momentum_indicator": "Rising",
+    "final_score": 0.62
+  }
+}
+
+
+2️⃣ Get Target Segments
+Endpoint:
+GET /api/targets/<destination>
+
+Example:
+GET /api/targets/Dubai
+
+Response:
+{
+  "destination": "Dubai",
+  "top_segments": [
+    {
+      "segment": "High Value",
+      "score": 0.87
+    }
+  ]
+}
+
+
+3️⃣ Launch Full Campaign
+Endpoint:
+POST /api/campaign/launch
+
+Body:
+{
+  "agent_id": "uuid-agent-id",
+  "destination": "Dubai"
+}
+
+Response:
+{
+  "destination": "Dubai",
+  "trend_score": 0.62,
+  "image_url": "https://res.cloudinary.com/...",
+  "segment": "High Value"
+}
+
+
+4️⃣ Fetch Campaign History
+Endpoint:
+GET /api/campaign/<destination>
+
+Response:
+{
+  "destination": "Dubai",
+  "campaigns": [
+    {
+      "campaign_id": "uuid",
+      "trend_score": 0.62,
+      "image_url": "https://res.cloudinary.com/...",
+      "created_at": "2026-02-21T09:22:00"
+    }
+  ]
+}
+
+
+6️⃣ System Strengths
+✔ No GPU dependency
+✔ Hybrid image retrieval (real photography)
+✔ AI-generated search optimization
+✔ Segment-aware personalization
+✔ Data-driven trend scoring
+✔ RFM-based targeting
+✔ Production-ready REST API
+✔ Fully persistent database model
+✔ Scalable architecture
+
+7️⃣ Data Intelligence Layers
+The system combines:
+Market Intelligence
+Customer Intelligence
+Segment Intelligence
+Visual Intelligence
+Creative Personalization
+This creates:
+AI Campaign Automation Engine for Travel Agents
+
+8️⃣ Performance Profile
+Step
+Time
+Trend Update
+~0.3s
+Targeting
+~0.2s
+Campaign Build
+~1s
+Image Fetch
+~1s
+Overlay
+~0.2s
+Upload
+~0.4s
+
+Total: ~3–4 seconds
+
+9️⃣ Deployment Architecture
+Flask App
+    ↓
+Gunicorn
+    ↓
+Nginx
+    ↓
+Cloud Server (AWS / GCP / Azure)
+
+External dependencies:
+SerpAPI
+Pexels API
+Groq API
+Cloudinary
+PostgreSQL
+
