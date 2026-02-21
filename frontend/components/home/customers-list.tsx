@@ -5,17 +5,31 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Users, MapPin, Calendar, UserCircle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+
+import {
+  ArrowLeft,
+  Users,
+  UserCircle,
+  Plus,
+} from 'lucide-react'
 
 interface Customer {
   id: string
   name: string
   email: string
   phone?: string
-  destination?: string
-  dates?: string
-  travelers?: number
-  status?: string
+  risk_preference?: string
   image?: string
 }
 
@@ -24,16 +38,16 @@ interface CustomersListProps {
   onBack: () => void
 }
 
-const getStatusBadge = (status: string = 'pending') => {
-  switch (status) {
-    case 'pending':
-      return 'bg-primary/10 text-primary/80 border-primary/20'
-    case 'in-progress':
-      return 'bg-primary/8 text-primary/70 border-primary/15'
-    case 'completed':
-      return 'bg-primary/6 text-primary/60 border-primary/10'
+const getRiskBadge = (risk: string = "Medium") => {
+  switch (risk.toLowerCase()) {
+    case "high":
+      return "bg-red-100 text-red-700 border-red-300"
+    case "medium":
+      return "bg-yellow-100 text-yellow-700 border-yellow-300"
+    case "low":
+      return "bg-green-100 text-green-700 border-green-300"
     default:
-      return 'bg-muted text-foreground/70 border-border/50'
+      return "bg-muted text-foreground/70 border-border/50"
   }
 }
 
@@ -41,36 +55,79 @@ export function CustomersList({ agentId, onBack }: CustomersListProps) {
   const router = useRouter()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState(false)
+
+  // Form for new client
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    source_city: "",
+    budget_range: "",
+    risk_preference: "Medium",
+  })
+
+  const updateField = (key: string, value: string) => {
+    setForm(prev => ({ ...prev, [key]: value }))
+  }
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/agents/${agentId}/customers`)
-        const data = await res.json()
-
-        const mapped = data.map((c: any) => ({
-          id: c.customer_id,
-          name: c.name,
-          email: c.email,
-          // Backend does not provide these -> placeholders for now
-          phone: '',
-          destination: '',
-          dates: '',
-          travelers: 1,
-          status: 'pending',
-          image: null,
-        }))
-
-        setCustomers(mapped)
-      } catch (err) {
-        console.error('Failed to fetch customers:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchCustomers()
   }, [agentId])
+
+  const fetchCustomers = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/agents/${agentId}/customers`)
+      const data = await res.json()
+
+      const mapped: Customer[] = data.map((c: any) => ({
+        id: c.customer_id,
+        name: c.name,
+        email: c.email,
+        phone: "",
+        risk_preference: c.risk_preference,
+        image: null,
+      }))
+
+      setCustomers(mapped)
+    } catch (err) {
+      console.error('Failed to fetch customers:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateCustomer = async () => {
+    try {
+      const payload = {
+        agent_id: agentId,
+        ...form,
+      }
+
+      const res = await fetch("http://localhost:5000/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        alert("Failed to create client")
+        return
+      }
+
+      setOpen(false)
+      setForm({
+        name: "",
+        email: "",
+        source_city: "",
+        budget_range: "",
+        risk_preference: "Medium",
+      })
+
+      fetchCustomers()
+    } catch (err) {
+      console.error("Error creating client:", err)
+    }
+  }
 
   const handleSelectCustomer = (customerId: string) => {
     router.push(`/dashboard?customer=${customerId}&agent=${agentId}`)
@@ -82,17 +139,92 @@ export function CustomersList({ agentId, onBack }: CustomersListProps) {
   return (
     <section className="space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={onBack} className="rounded-lg">
-          <ArrowLeft size={18} />
-        </Button>
-        <div>
-          <h2 className="text-3xl font-bold text-foreground">Clients</h2>
-          <p className="text-muted-foreground text-sm">{customers.length} clients found</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={onBack}>
+            <ArrowLeft size={18} />
+          </Button>
+          <div>
+            <h2 className="text-3xl font-bold text-foreground">Clients</h2>
+            <p className="text-muted-foreground text-sm">
+              {customers.length} clients found
+            </p>
+          </div>
         </div>
+
+        {/* ➕ Add New Client */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2">
+              <Plus size={18} /> Add Client
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Client</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-3">
+              <div>
+                <Label>Name</Label>
+                <Input
+                  placeholder="Client Name"
+                  value={form.name}
+                  onChange={(e) => updateField("name", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>Email</Label>
+                <Input
+                  placeholder="Email Address"
+                  value={form.email}
+                  onChange={(e) => updateField("email", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>Source City</Label>
+                <Input
+                  placeholder="City of departure"
+                  value={form.source_city}
+                  onChange={(e) => updateField("source_city", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>Budget Range</Label>
+                <Input
+                  placeholder="Ex: 1-2 Lakhs"
+                  value={form.budget_range}
+                  onChange={(e) => updateField("budget_range", e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label>Risk Preference</Label>
+                <select
+                  className="w-full border rounded-md p-2 text-sm"
+                  value={form.risk_preference}
+                  onChange={(e) => updateField("risk_preference", e.target.value)}
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreateCustomer}>Create Client</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Customers */}
+      {/* Customers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {customers.map((customer) => (
           <Card
@@ -107,38 +239,23 @@ export function CustomersList({ agentId, onBack }: CustomersListProps) {
             <div className="p-5 space-y-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="space-y-1 flex-1">
-                  <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                  <h3 className="text-base font-semibold group-hover:text-primary">
                     {customer.name}
                   </h3>
                   <p className="text-xs text-muted-foreground">{customer.email}</p>
                 </div>
 
-                <Badge className={`text-xs font-medium border capitalize flex-shrink-0 ${getStatusBadge(customer.status)}`}>
-                  {customer.status}
+                {/* RISK BADGE */}
+                <Badge
+                  className={`text-xs font-medium border capitalize ${getRiskBadge(customer.risk_preference)}`}
+                >
+                  {customer.risk_preference}
                 </Badge>
               </div>
 
-              {/* Placeholder trip section */}
-              <div className="space-y-2.5 pt-2 border-t border-border/50">
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin size={14} className="text-muted-foreground" />
-                  <span className="text-foreground font-medium">{customer.destination || 'No destination assigned'}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar size={14} className="text-muted-foreground" />
-                  <span className="text-foreground font-medium">{customer.dates || 'No dates assigned'}</span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <Users size={14} className="text-muted-foreground" />
-                  <span className="text-foreground font-medium">
-                    {customer.travelers ?? 1} travelers
-                  </span>
-                </div>
-              </div>
-
-              <Button className="w-full group-hover:bg-primary/90 transition-colors">Create Package</Button>
+              <Button className="w-full group-hover:bg-primary/90">
+                Create Package
+              </Button>
             </div>
           </Card>
         ))}
