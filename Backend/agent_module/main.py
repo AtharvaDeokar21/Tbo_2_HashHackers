@@ -1,5 +1,5 @@
 from flask import Flask
-from routes.campaign_routes import campaign_bp
+from routes.endpoints_routes import campaign_bp
 
 app = Flask(__name__)
 

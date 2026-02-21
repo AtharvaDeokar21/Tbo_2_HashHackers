@@ -7,8 +7,9 @@ class Trip(db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     customer_id = db.Column(UUID(as_uuid=True), db.ForeignKey("customers.id", ondelete="CASCADE"))
-    origin = db.Column(db.String(10))
-    destination = db.Column(db.String(100))
+    origin_airport = db.Column(db.String(10))
+    destination_airport = db.Column(db.String(10))
+    destination_city = db.Column(db.String(100))
     departure_date = db.Column(db.Date)
     return_date = db.Column(db.Date)
     duration_days = db.Column(db.Integer)

@@ -25,19 +25,38 @@ def fetch_hotels(destination, check_in, check_out):
 
     for property in data.get("properties", []):
         price = 0
+        total_price = 0
 
-        # Case 1: Standard hotels
+        # Extract pricing safely
         if property.get("rate_per_night"):
             price = property["rate_per_night"].get("extracted_lowest", 0)
 
-        # Case 2: extracted_price exists
-        elif property.get("extracted_price"):
-            price = property.get("extracted_price", 0)
+        if property.get("total_rate"):
+            total_price = property["total_rate"].get("extracted_lowest", 0)
+
+        if property.get("extracted_price"):
+            price = property.get("extracted_price", price)
+
+        images = property.get("images", [])
+        image_url = None
+
+        if images:
+            first_image = images[0]
+            image_url = first_image.get("original_image") or first_image.get("thumbnail")
 
         hotels.append({
             "name": property.get("name"),
-            "price": price,
-            "rating": property.get("overall_rating", 0)
+            "price_per_night": price,
+            "total_price": total_price,
+            "rating": property.get("overall_rating", 0),
+            "reviews": property.get("reviews", 0),
+            "hotel_class": property.get("hotel_class", None),
+            "image_url": image_url,
+            "latitude": property.get("gps_coordinates", {}).get("latitude"),
+            "longitude": property.get("gps_coordinates", {}).get("longitude"),
+            "amenities": property.get("amenities", []),
+            "check_in": property.get("check_in_time"),
+            "check_out": property.get("check_out_time")
         })
 
     print("HOTELS FINAL:", hotels[:3])

@@ -20,7 +20,7 @@ def simulate_change(itinerary_id, simulation_payload):
     simulated = {
         "flight": {
             "price": float(flight.price),
-            "layovers": flight.layover_minutes
+            "layovers": flight.max_layover_minutes
         },
         "hotel": {
             "price": float(hotel.price),

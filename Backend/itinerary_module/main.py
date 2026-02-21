@@ -16,13 +16,21 @@ from services.price_tracker import record_price_snapshot
 from services.simulation_engine import simulate_change
 from services.intent_agent import extract_intent
 from services.intent_service import process_intent
+from services.decision_agents import run_multi_agent_decision
+from services.query_bot import run_query_bot
+from services.embedding_service import embed_itinerary
+from services.trip_plan_generator import generate_trip_plan
+from models.trip_plan import TripPlan
+from sqlalchemy import func
+from flask_cors import CORS
+
 
 from config import Config
 from database import db
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
+CORS(app)
 db.init_app(app)
 
 # Import models AFTER db init
@@ -35,15 +43,12 @@ from models.hotel_option import HotelOption
 from models.margin_snapshot import MarginSnapshot
 from models.risk_snapshot import RiskSnapshot
 from models.price_history import PriceHistory
-
+from database import db
 with app.app_context():
     db.create_all()
 
 @app.route("/seed", methods=["POST"])
 def seed_data():
-    from models.agent import Agent
-    from models.customer import Customer
-    from database import db
 
     agent = Agent(
         name="Test Agent",
@@ -69,6 +74,104 @@ def seed_data():
         "agent_id": str(agent.id),
         "customer_id": str(customer.id)
     }
+@app.route("/agents", methods=["POST"])
+def create_agent():
+
+    data = request.json
+
+    if not data.get("name") or not data.get("email"):
+        return jsonify({"error": "Name and email required"}), 400
+
+    # Check duplicate email
+    existing = Agent.query.filter_by(email=data["email"]).first()
+    if existing:
+        return jsonify({"error": "Agent already exists"}), 400
+
+    agent = Agent(
+        name=data["name"],
+        email=data["email"],
+        phone=data.get("phone"),
+        agency_name=data.get("agency_name"),
+        city=data.get("city")
+    )
+
+    db.session.add(agent)
+    db.session.commit()
+
+    return jsonify({
+        "agent_id": str(agent.id),
+        "message": "Agent created successfully"
+    }), 201
+
+@app.route("/customers", methods=["POST"])
+def create_customer():
+
+    data = request.json
+
+    if not data.get("agent_id") or not data.get("name"):
+        return jsonify({"error": "agent_id and name required"}), 400
+
+    agent = Agent.query.get(data["agent_id"])
+    if not agent:
+        return jsonify({"error": "Invalid agent_id"}), 400
+
+    customer = Customer(
+        agent_id=agent.id,
+        name=data["name"],
+        email=data.get("email"),
+        phone=data.get("phone"),
+        source_city=data.get("source_city"),
+        budget_range=data.get("budget_range"),
+        risk_preference=data.get("risk_preference")
+    )
+
+    db.session.add(customer)
+    db.session.commit()
+
+    return jsonify({
+        "customer_id": str(customer.id),
+        "message": "Customer created successfully"
+    }), 201
+
+@app.route("/agents", methods=["GET"])
+def list_agents():
+
+    agents_with_counts = (
+        db.session.query(
+            Agent,
+            func.count(Customer.id).label("customer_count")
+        )
+        .outerjoin(Customer, Agent.id == Customer.agent_id)
+        .group_by(Agent.id)
+        .all()
+    )
+
+    return jsonify([
+        {
+            "agent_id": str(agent.id),
+            "name": agent.name,
+            "email": agent.email,
+            "agency_name": agent.agency_name,
+            "city": agent.city,
+            "customer_count": customer_count
+        }
+        for agent, customer_count in agents_with_counts
+    ])
+
+@app.route("/agents/<uuid:agent_id>/customers", methods=["GET"])
+def list_customers(agent_id):
+
+    customers = Customer.query.filter_by(agent_id=agent_id).all()
+
+    return jsonify([
+        {
+            "customer_id": str(c.id),
+            "name": c.name,
+            "email": c.email,
+            "risk_preference": c.risk_preference
+        }
+        for c in customers
+    ])
 
 
 @app.route("/generate-itinerary", methods=["POST"])
@@ -82,14 +185,14 @@ def generate_itinerary():
         return jsonify({"error": str(e)}), 400
 
     flights = fetch_flights(
-        structured["origin"],
-        structured["destination"],
+        structured["origin_airport"],
+        structured["destination_airport"],
         structured["departure_date"],
         structured["return_date"]
     )
 
     hotels = fetch_hotels(
-        structured["destination"],
+        structured["destination_city"],
         structured["departure_date"],
         structured["return_date"]
     )
@@ -106,7 +209,35 @@ def generate_itinerary():
         calculate_margin(itinerary.id)
         calculate_risk(itinerary.id)
         update_final_score(itinerary.id)
+        embed_itinerary(itinerary.id)
+    # Generate trip-level day-wise plan (only once)
+    existing_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
 
+    if not existing_plan:
+
+        trip_details = {
+            "destination_city": structured["destination_city"],
+            "departure_date": structured["departure_date"],
+            "return_date": structured["return_date"],
+            "travel_style": structured.get("travel_style", "Standard"),
+            "budget": structured["budget"],
+            "risk_preference": structured.get("risk_preference", "Medium")
+        }
+
+        try:
+            plan_json = generate_trip_plan(trip_details)
+
+            trip_plan = TripPlan(
+                trip_id=structured["trip_id"],
+                structured_plan=plan_json
+            )
+
+            db.session.add(trip_plan)
+            db.session.commit()
+
+        except Exception as e:
+            print("Trip plan generation failed:", e)
+    trip_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
 
     return jsonify({
         "trip_id": structured["trip_id"],
@@ -118,8 +249,22 @@ def generate_itinerary():
                 "confidence_score": float(i.confidence_score)
             }
             for i in saved
-        ]
+        ],
+        "day_wise_plan": trip_plan.structured_plan if trip_plan else None
     })
+
+@app.route("/itinerary/<uuid:itinerary_id>/decision", methods=["GET"])
+def itinerary_decision(itinerary_id):
+
+    details = get_itinerary_details(itinerary_id)
+
+    if not details:
+        return jsonify({"error": "Not found"}), 404
+
+    result = run_multi_agent_decision(details["scores"] | details)
+
+    return jsonify(result)
+
 
 @app.route("/itinerary/<uuid:itinerary_id>", methods=["GET"])
 def fetch_itinerary(itinerary_id):
@@ -128,8 +273,13 @@ def fetch_itinerary(itinerary_id):
 
     if not result:
         return jsonify({"error": "Itinerary not found"}), 404
+    
+    trip_plan = TripPlan.query.filter_by(trip_id=result["trip_id"]).first()
+
+    result["day_wise_plan"] = trip_plan.structured_plan if trip_plan else None
 
     return jsonify(result)
+
 
 @app.route("/itinerary/<uuid:itinerary_id>/simulate", methods=["POST"])
 def simulate_itinerary(itinerary_id):
@@ -163,14 +313,14 @@ def generate_from_text():
     structured = process_intent(structured_intent)
 
     flights = fetch_flights(
-        structured["origin"],
-        structured["destination"],
+        structured["origin_airport"],
+        structured["destination_airport"],
         structured["departure_date"],
         structured["return_date"]
     )
 
     hotels = fetch_hotels(
-        structured["destination"],
+        structured["destination_city"],
         structured["departure_date"],
         structured["return_date"]
     )
@@ -179,7 +329,39 @@ def generate_from_text():
     top_three = rank_itineraries(combinations, structured["budget"])
 
     saved = persist_itineraries(structured["trip_id"], top_three)
+    for itinerary in saved:
+        calculate_margin(itinerary.id)
+        calculate_risk(itinerary.id)
+        update_final_score(itinerary.id)
+        embed_itinerary(itinerary.id)
+    # Generate trip-level day-wise plan (only once)
+    existing_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
 
+    if not existing_plan:
+
+        trip_details = {
+            "destination_city": structured["destination_city"],
+            "departure_date": structured["departure_date"],
+            "return_date": structured["return_date"],
+            "travel_style": structured.get("travel_style", "Standard"),
+            "budget": structured["budget"],
+            "risk_preference": structured.get("risk_preference", "Medium")
+        }
+
+        try:
+            plan_json = generate_trip_plan(trip_details)
+
+            trip_plan = TripPlan(
+                trip_id=structured["trip_id"],
+                structured_plan=plan_json
+            )
+
+            db.session.add(trip_plan)
+            db.session.commit()
+
+        except Exception as e:
+            print("Trip plan generation failed:", e)
+    trip_plan = TripPlan.query.filter_by(trip_id=structured["trip_id"]).first()
     return jsonify({
         "trip_id": structured["trip_id"],
         "structured_intent": structured_intent,
@@ -190,7 +372,23 @@ def generate_from_text():
                 "final_score": float(i.final_score)
             }
             for i in saved
-        ]
+        ],
+        "day_wise_plan": trip_plan.structured_plan if trip_plan else None
+    })
+
+@app.route("/itinerary/<uuid:itinerary_id>/query", methods=["POST"])
+def itinerary_query(itinerary_id):
+
+    data = request.json
+    question = data.get("question")
+
+    if not question:
+        return jsonify({"error": "Question required"}), 400
+
+    response = run_query_bot(str(itinerary_id), question)
+
+    return jsonify({
+        "answer": response
     })
 
 

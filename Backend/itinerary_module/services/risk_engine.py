@@ -17,7 +17,7 @@ def calculate_risk(itinerary_id):
     hotel = HotelOption.query.filter_by(itinerary_id=itinerary.id).first()
 
     # Connection risk
-    layover = flight.layover_minutes if flight else 0
+    layover = flight.max_layover_minutes if flight else 0
     connection_risk_score = min(layover / 300, 1)
 
     vol_data = calculate_volatility(itinerary_id)

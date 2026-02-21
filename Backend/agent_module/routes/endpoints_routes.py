@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
-from executor.campaign_launch_executor import launch_campaign_generation
+from execution_engine.whatsapp_bulk_executor import execute_bulk_whatsapp
+from execution_engine.campaign_launch_executor import launch_campaign_generation
 from trend_engine.hybrid_trend_service import update_demand_signal
 from targeting_engine.targeting_service import get_top_targets
 import psycopg2
@@ -172,4 +173,20 @@ def list_campaigns():
 
     return jsonify({"campaigns": campaigns})
 
+@campaign_bp.route("/execution/whatsapp", methods=["POST"])
+def bulk_whatsapp():
+
+    data = request.json
+    agent_id = data.get("agent_id")
+    customer_ids = data.get("customer_ids")
+
+    if not agent_id or not customer_ids:
+        return jsonify({"error": "agent_id and customer_ids required"}), 400
+
+    execute_bulk_whatsapp(agent_id, customer_ids)
+
+    return jsonify({
+        "status": "execution_started",
+        "customers_count": len(customer_ids)
+    })
 
