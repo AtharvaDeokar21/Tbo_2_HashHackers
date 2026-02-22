@@ -13,6 +13,7 @@ client = Groq(api_key=api_key.strip())
 
 MODEL_NAME = "openai/gpt-oss-120b"
 
+
 def generate_text(prompt, temperature=0.7, max_tokens=1200):
 
     try:
