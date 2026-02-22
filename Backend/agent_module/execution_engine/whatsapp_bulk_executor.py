@@ -15,62 +15,93 @@ from creative_engine.creative_orchestrator import build_creative
 
 def process_single_customer(agent_id, customer_id):
 
-    customer = fetch_customer(customer_id)
-    if not customer:
-        print(f"Customer {customer_id} not found")
-        return
-
-    destination = get_customer_destination(customer_id)
-    if not destination:
-        print(f"No destination for {customer_id}")
-        return
-
-    print(f"Generating campaign for {customer[1]} → {destination}")
-
-    # Trend
-    trend_data = update_demand_signal(destination)
-
-    # Creative
-    creative_context = {
-        "destination": destination,
-        "segment": customer[4],
-        "urgency": "48_hours" if trend_data["final_score"] > 0.6 else "Limited Period",
-        "trend_score": trend_data["final_score"]
+    result = {
+        "customer_id": customer_id,
+        "customer_name": None,
+        "destination": None,
+        "message": None,
+        "image_url": None,
+        "twilio_sid": None,
+        "status": None,
+        "error": None
     }
 
-    image_url = build_creative(creative_context)
+    try:
+        customer = fetch_customer(customer_id)
+        if not customer:
+            result["error"] = "Customer not found"
+            return result
 
-    # Personalized message
-    message = generate_personalized_message(customer, trend_data, destination)
+        result["customer_name"] = customer[1]
 
-    # Send WhatsApp (safe number only)
-    sid, status = send_whatsapp_message(
-        message,
-        image_url
-    )
+        destination = get_customer_destination(customer_id)
+        if not destination:
+            result["error"] = "No destination found"
+            return result
 
-    print(f"WhatsApp sent for {customer[1]} | SID: {sid}")
+        result["destination"] = destination
 
-    log_communication(customer_id, message, status)
+        # Trend
+        trend_data = update_demand_signal(destination)
+
+        # Creative
+        creative_context = {
+            "destination": destination,
+            "segment": customer[4],
+            "urgency": "48_hours" if trend_data["final_score"] > 0.6 else "Limited Period",
+            "trend_score": trend_data["final_score"]
+        }
+
+        image_url = build_creative(creative_context)
+        result["image_url"] = image_url
+
+        # Personalized message
+        message = generate_personalized_message(customer, trend_data, destination)
+        result["message"] = message
+
+        # Send WhatsApp (safe number only)
+        sid, status = send_whatsapp_message(
+            message,
+            image_url
+        )
+
+        result["twilio_sid"] = sid
+        result["status"] = status
+
+        log_communication(customer_id, message, status)
+
+    except Exception as e:
+        result["error"] = str(e)
+
+    return result
 
 
 def execute_bulk_whatsapp(agent_id, customer_ids):
 
     print(f"Starting bulk WhatsApp execution for {len(customer_ids)} customers")
 
-    futures = []
+    results = []
 
     with ThreadPoolExecutor(max_workers=6) as executor:
-        for customer_id in customer_ids:
-            futures.append(
-                executor.submit(process_single_customer, agent_id, customer_id)
-            )
+        futures = {
+            executor.submit(process_single_customer, agent_id, cid): cid
+            for cid in customer_ids
+        }
 
-        # Wait for all to finish
         for future in as_completed(futures):
             try:
-                future.result()
+                result = future.result()
+                results.append(result)
             except Exception as e:
-                print("Thread error:", e)
+                results.append({
+                    "customer_id": futures[future],
+                    "error": str(e)
+                })
 
     print("Bulk execution completed.")
+
+    return {
+        "total_customers": len(customer_ids),
+        "processed": len(results),
+        "results": results
+    }

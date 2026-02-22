@@ -7,16 +7,13 @@ load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 
 if not api_key:
-    raise ValueError("GROQ_API_KEY not found in environment variables.")
+    raise ValueError("GROQ_API_KEY not found.")
 
 client = Groq(api_key=api_key.strip())
 
 MODEL_NAME = "openai/gpt-oss-120b"
 
-def generate_text(prompt, temperature=0.7):
-
-    if not isinstance(prompt, str):
-        prompt = str(prompt)
+def generate_text(prompt, temperature=0.7, max_tokens=1200):
 
     try:
         response = client.chat.completions.create(
@@ -24,15 +21,15 @@ def generate_text(prompt, temperature=0.7):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an intelligent structured output assistant. Always return clean JSON when requested."
+                    "content": "You are a strategic AI assistant. Always return valid clean JSON when JSON is requested."
                 },
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": str(prompt)
                 }
             ],
             temperature=temperature,
-            max_tokens=800
+            max_tokens=max_tokens
         )
 
         return response.choices[0].message.content
