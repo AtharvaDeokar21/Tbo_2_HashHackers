@@ -18,8 +18,8 @@ def send_whatsapp_message(message_text, image_url):
     message = client.messages.create(
         from_=FROM_NUMBER,
         body=message_text,
-        media_url=[image_url],  # always attach image
-        to=f"whatsapp:{SAFE_NUMBER}"  # always safe number
+        media_url=[image_url],  
+        to=f"whatsapp:{SAFE_NUMBER}"  
     )
 
     return message.sid, message.status

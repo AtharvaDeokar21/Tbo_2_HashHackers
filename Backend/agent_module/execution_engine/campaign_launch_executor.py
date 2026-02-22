@@ -1,9 +1,12 @@
 import psycopg2
 import os
+import json
 from dotenv import load_dotenv
+
 from trend_engine.hybrid_trend_service import update_demand_signal
 from targeting_engine.targeting_service import get_top_targets
-from campaign_builder.campaign_builder_service import build_campaign_package
+from campaign_builder.prompt_templates import build_campaign_prompt
+from campaign_builder.content_generator import generate_campaign_content
 from creative_engine.creative_orchestrator import build_creative
 
 load_dotenv()
@@ -18,24 +21,54 @@ def launch_campaign_generation(agent_id, destination):
     print("Step 2: Getting Top Targets...")
     targets = get_top_targets(destination)
 
-    print("Step 3: Building Campaign Content...")
-    trend_data["agent_id"] = agent_id
-    campaign_content = build_campaign_package(trend_data, targets)
+    segment = targets[0]["segment"] if targets else "General"
+    urgency = "48_hours" if trend_data["final_score"] > 0.6 else "7_days"
 
-    print("Step 4: Generating Creative Image...")
+    # STEP 3 — Build Prompt
+    prompt = build_campaign_prompt({
+        "destination": destination,
+        "trend_score": trend_data["final_score"],
+        "urgency": urgency,
+        "segment": segment,
+        "margin_score": trend_data.get("business", 0.5)
+    })
+
+    print("\n=== FINAL PROMPT ===")
+    print(prompt)
+
+    # STEP 4 — Call LLM
+    raw_output = generate_campaign_content(prompt)
+
+    print("\n=== RAW LLM OUTPUT ===")
+    print(raw_output)
+
+    try:
+        campaign_blueprint = json.loads(raw_output)
+    except Exception as e:
+        print("JSON parsing failed:", e)
+        raise Exception("Invalid JSON returned from LLM")
+
+    # STEP 5 — Generate Creative
     creative_context = {
         "destination": destination,
-        "segment": targets[0]["segment"] if targets else "General",
-        "urgency": "48_hours" if trend_data["final_score"] > 0.6 else "7_days",
+        "segment": segment,
+        "urgency": urgency,
         "trend_score": trend_data["final_score"],
-        "positioning": campaign_content.get("positioning_angle", "")
+        "positioning": campaign_blueprint.get("positioning_angle", "")
     }
 
     image_url = build_creative(creative_context)
 
-    print("Step 5: Storing Final Creative Asset...")
+    # STEP 6 — Save Campaign
+    campaign_id = save_campaign(
+        agent_id,
+        destination,
+        trend_data["final_score"],
+        campaign_blueprint
+    )
 
-    store_final_creative(destination, image_url)
+    # STEP 7 — Save Creative
+    save_asset(campaign_id, image_url)
 
     print("Campaign generation completed.")
 
@@ -43,30 +76,56 @@ def launch_campaign_generation(agent_id, destination):
         "destination": destination,
         "trend_score": trend_data["final_score"],
         "image_url": image_url,
-        "segment": creative_context["segment"]
+        "campaign_blueprint": campaign_blueprint
     }
 
 
-def store_final_creative(destination, image_url):
+# ----------------------------------------------------------
+# SAVE CAMPAIGN
+# ----------------------------------------------------------
+
+def save_campaign(agent_id, destination, trend_score, blueprint):
 
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
-    # Get latest campaign for that destination
     cur.execute("""
-        SELECT id FROM campaigns
-        WHERE destination = %s
-        ORDER BY created_at DESC
-        LIMIT 1
-    """, (destination,))
+        INSERT INTO campaigns (
+            agent_id,
+            destination,
+            trend_score,
+            confidence_score,
+            momentum_indicator,
+            campaign_status,
+            campaign_blueprint
+        )
+        VALUES (%s, %s, %s, %s, %s, 'draft', %s)
+        RETURNING id
+    """, (
+        agent_id,
+        destination,
+        trend_score,
+        trend_score,
+        "Rising",
+        json.dumps(blueprint)
+    ))
 
-    campaign = cur.fetchone()
+    campaign_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
 
-    if not campaign:
-        conn.close()
-        return
+    return campaign_id
 
-    campaign_id = campaign[0]
+
+# ----------------------------------------------------------
+# SAVE ASSET
+# ----------------------------------------------------------
+
+def save_asset(campaign_id, image_url):
+
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
 
     cur.execute("""
         INSERT INTO campaign_assets

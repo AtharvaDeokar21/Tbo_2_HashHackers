@@ -1,3 +1,5 @@
+from unittest import result
+
 from flask import Blueprint, request, jsonify
 from execution_engine.whatsapp_bulk_executor import execute_bulk_whatsapp
 from execution_engine.campaign_launch_executor import launch_campaign_generation
@@ -45,13 +47,7 @@ def launch_campaign():
 
     result = launch_campaign_generation(agent_id, destination)
 
-    return jsonify({
-        "destination": destination,
-        "trend_score": result["campaign_blueprint"]["trend_score"] 
-            if "trend_score" in result["campaign_blueprint"] else None,
-        "image_url": result["image_url"],
-        "blueprint": result["campaign_blueprint"]
-    })
+    return jsonify(result)
 
 @campaign_bp.route("/campaign/<destination>", methods=["GET"])
 def get_campaign(destination):
@@ -183,10 +179,6 @@ def bulk_whatsapp():
     if not agent_id or not customer_ids:
         return jsonify({"error": "agent_id and customer_ids required"}), 400
 
-    execute_bulk_whatsapp(agent_id, customer_ids)
+    result = execute_bulk_whatsapp(agent_id, customer_ids)
 
-    return jsonify({
-        "status": "execution_started",
-        "customers_count": len(customer_ids)
-    })
-
+    return jsonify(result)

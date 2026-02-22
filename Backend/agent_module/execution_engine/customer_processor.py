@@ -2,7 +2,6 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 from ai.groq_client import generate_text
-from campaign_builder.campaign_builder_service import build_campaign_package
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")

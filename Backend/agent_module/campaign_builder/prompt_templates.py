@@ -1,4 +1,3 @@
-
 def build_campaign_prompt(data, itinerary_info=None, customer_insights=None):
 
     prompt = f"""
@@ -11,12 +10,6 @@ Trend Score: {data['trend_score']}
 Urgency Window: {data['urgency']}
 Target Segment: {data['segment']}
 Margin Strength: {data['margin_score']}
-
-Itinerary Insights:
-{itinerary_info}
-
-Customer Emotional Insights:
-{customer_insights}
 
 Return structured JSON with:
 
@@ -35,5 +28,10 @@ Return structured JSON with:
 13. retargeting_strategy
 14. agent_notes
 
-Return only JSON.
+Return ONLY valid JSON.
+Do not include explanation.
+Do not include markdown.
+Do not include backticks.
 """
+
+    return prompt
