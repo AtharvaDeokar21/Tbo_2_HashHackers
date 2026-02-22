@@ -2,8 +2,8 @@
 
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
-import { CampaignIdentityCard } from '@/components/campaign-generator/campaign-identity-card'
-import { CampaignFlowTabs } from '@/components/campaign-generator/campaign-flow-tabs'
+import TrendCard from '@/components/campaign-generator/TrendCard'
+import CampaignFlowWithInput from '@/components/campaign-generator/CampaignFlowWithInput'
 import { CreativePreviewPanel } from '@/components/campaign-generator/creative-preview-panel'
 
 const mockCampaignDays = [
@@ -125,24 +125,18 @@ export default function CampaignGenerator() {
 
             {/* Campaign Identity */}
             <div className="mb-0">
-              <CampaignIdentityCard
-                campaignName="Summer Bali Escape"
-                personaSegment="Luxury Travelers"
-                offerAngle="All-inclusive luxury packages with cultural immersion"
-                urgencyWindow="48 hours - Limited inventory"
-                confidenceScore={92}
-              />
+              <TrendCard />
             </div>
 
             {/* Two Column Layout for Campaign Flow and Preview */}
             <div className="grid grid-cols-5 gap-8 items-start">
               {/* Left: Campaign Flow (3 columns) */}
               <div className="col-span-3 h-full">
-                <CampaignFlowTabs campaignDays={mockCampaignDays} />
+                <CampaignFlowWithInput />
               </div>
 
               {/* Right: Creative Preview (2 columns) */}
-              <div className="col-span-2 h-full">
+              <div className="col-span-2">
                 <CreativePreviewPanel
                   campaignName="Summer Bali Escape"
                   instagramPost="Pack your bags and let the adventure begin! 🏝️ Our new Bali packages include 7 nights at a luxury beachfront resort, daily activities, and flights. Limited time offer—book now for 30% off. Link in bio! #BaliVacation #TravelDeal #IslandLife #EarlyBirdOffer"

@@ -132,6 +132,7 @@ export function CustomersList({ agentId, onBack }: CustomersListProps) {
   const handleSelectCustomer = (customerId: string) => {
     router.push(`/dashboard?customer=${customerId}&agent=${agentId}`)
     localStorage.setItem('selectedCustomer', customerId)
+    localStorage.setItem('selectedAgent', agentId)
   }
 
   if (loading) return <p>Loading clients…</p>

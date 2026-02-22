@@ -128,16 +128,7 @@ export function CampaignFlowTabs({ campaignDays }: CampaignFlowTabsProps) {
                 </div>
 
                 {/* Hashtags */}
-                <div className="bg-secondary rounded-lg p-4 space-y-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Hashtags</p>
-                  <div className="flex flex-wrap gap-2">
-                    {day.hashtags.map((tag, idx) => (
-                      <Badge key={idx} variant="outline" className="font-mono text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+                
               </div>
 
               <Separator className="bg-border" />
@@ -158,16 +149,7 @@ export function CampaignFlowTabs({ campaignDays }: CampaignFlowTabsProps) {
               <Separator className="bg-border" />
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
-                <Button className="gap-2 font-semibold shadow-sm hover:shadow-md transition-shadow">
-                  <Edit2 size={16} />
-                  Edit Content
-                </Button>
-                <Button variant="secondary" className="gap-2 font-semibold shadow-sm hover:shadow-md transition-shadow">
-                  <Copy size={16} />
-                  Copy All
-                </Button>
-              </div>
+              
             </TabsContent>
           ))}
         </Tabs>

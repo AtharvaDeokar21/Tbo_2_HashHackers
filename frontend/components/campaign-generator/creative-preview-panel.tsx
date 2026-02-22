@@ -3,6 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Instagram, MessageCircle, Mail, Heart, MessageCircle as Comment, Share2 } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from "sonner"
+import Image from 'next/image'
+import { set } from 'date-fns'
+import { se } from 'date-fns/locale'
 
 interface CreativePreviewPanelProps {
   campaignName: string
@@ -21,6 +26,61 @@ export function CreativePreviewPanel({
   emailSubject,
   emailPreview,
 }: CreativePreviewPanelProps) {
+  const [whatsappResult, setWhatsappResult] = useState<any>(null)
+  const [sending, setSending] = useState(false)
+  const handleSendWhatsApp = async () => {
+    try {
+      setSending(true)       // 🔥 show loader / disable button
+
+      const stored = localStorage.getItem("selectedAgent")
+      if (!stored) {
+        toast.error("No agent selected.")
+        setSending(false)
+        return
+      }
+
+      const agent_id = stored
+
+      // STEP 1 — fetch customers
+      const res1 = await fetch(`http://localhost:5000/agents/${agent_id}/customers`)
+      const customers = await res1.json()
+
+      if (!customers || customers.length === 0) {
+        toast.error("No customers found.")
+        setSending(false)
+        return
+      }
+
+      const customer_ids = customers.map(c => c.customer_id)
+
+      // STEP 2 — send WhatsApp
+      const res2 = await fetch("http://localhost:5001/api/execution/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id, customer_ids })
+      })
+
+      const result = await res2.json()
+      console.log("WHATSAPP RESULT:", result)
+
+      if (!result?.results?.length) {
+        toast.error("WhatsApp sending failed.")
+        setSending(false)
+        return
+      }
+
+      // Store first one
+      setWhatsappResult(result.results[0])
+
+      toast.success(`WhatsApp sent to ${result.processed} client(s)`)
+
+    } catch (err) {
+      console.error(err)
+      toast.error("Error sending WhatsApp messages.")
+    }
+
+    setSending(false)    // 🔥 stop loader
+  }
   return (
     <Card className="h-full p-6 bg-card border-border shadow-sm hover:shadow-md transition-shadow">
       <div className="space-y-6">
@@ -94,21 +154,66 @@ export function CreativePreviewPanel({
           </TabsContent>
 
           {/* WhatsApp Preview */}
+          {/* WhatsApp Preview */}
           <TabsContent value="whatsapp" className="pt-6 space-y-4">
-            <div className="border border-border rounded-lg bg-secondary max-w-sm mx-auto overflow-hidden">
-              {/* WhatsApp Header */}
-              <div className="bg-primary px-4 py-2 text-primary-foreground text-xs font-semibold">
-                travel_agent_pro
-              </div>
 
-              {/* Message */}
-              <div className="p-4 space-y-3">
-                <div className="bg-primary text-primary-foreground rounded-lg rounded-tr-none p-3 max-w-xs ml-auto">
-                  <p className="text-sm">{whatsappMessage}</p>
-                  <p className="text-xs opacity-70 mt-1">14:32</p>
+            {/* WhatsApp UI Preview */}
+
+
+            {/* SEND BUTTON */}
+            <div className="flex justify-center">
+              <button
+                onClick={handleSendWhatsApp}
+                disabled={sending}
+                className={`bg-primary text-primary-foreground px-6 py-2 rounded-lg text-sm font-semibold
+                hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2
+                ${sending ? "opacity-70 cursor-not-allowed" : ""}`}
+              >
+                {sending && (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                )}
+                {sending ? "Sending..." : "Send WhatsApp to All Clients"}
+              </button>
+            </div>
+
+            {/* DISPLAY BACKEND RESULT */}
+            {whatsappResult && (
+              <div className="border border-border rounded-lg bg-secondary p-4 max-w-md mx-auto space-y-4 shadow-sm">
+
+                <h3 className="font-semibold text-lg">WhatsApp Delivery Preview</h3>
+
+                {/* Image Bubble */}
+                {whatsappResult.image_url && (
+                  <div className="flex justify-end">
+                    <div className="rounded-lg overflow-hidden max-w-[70%] shadow bg-[#dcf8c6]">
+                      <Image
+                        src={whatsappResult.image_url}
+                        alt="Sent Media"
+                        width={400}
+                        height={250}
+                        className="rounded-lg"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Message Bubble */}
+                <div className="flex justify-end">
+                  <div className="bg-[#dcf8c6] text-black dark:text-white rounded-lg rounded-tr-none p-3 shadow max-w-[75%]">
+                    <p className="text-sm leading-relaxed">{whatsappResult.message}</p>
+                    <p className="text-[10px] text-black/60 mt-1 text-right">
+                      Delivered ✓✓
+                    </p>
+                  </div>
+                </div>
+
+                {/* Meta Info */}
+                <div className="text-xs text-muted-foreground space-y-1 pl-1">
+                  <p><strong>Sent To:</strong> {whatsappResult.customer_name}</p>
                 </div>
               </div>
-            </div>
+            )}
+
           </TabsContent>
 
           {/* Email Preview */}
@@ -134,9 +239,7 @@ export function CreativePreviewPanel({
 
         <Separator className="bg-border" />
 
-        <p className="text-xs text-muted-foreground text-center">
-          These are previews. Actual rendering may vary based on platform and device.
-        </p>
+
       </div>
     </Card>
   )
