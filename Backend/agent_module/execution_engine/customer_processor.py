@@ -25,22 +25,51 @@ def fetch_customer(customer_id):
     return row
 
 
-def generate_personalized_message(customer, blueprint):
-
+def generate_personalized_message(customer, trend_data, destination):
+    
     prompt = f"""
-You are a travel marketing expert.
+You are a high-conversion luxury travel copywriter.
 
-Customer Name: {customer[1]}
-Source City: {customer[3]}
-Budget Range: {customer[4]}
-Risk Preference: {customer[5]}
+DO NOT repeat raw database fields.
+DO NOT mention trend score numbers.
+DO NOT mention risk preference directly.
 
-Campaign Positioning: {blueprint.get("positioning_angle")}
-Urgency: {blueprint.get("urgency_message")}
+Customer Profile:
+Name: {customer[1]}
+City: {customer[3]}
+Budget Tier: {customer[4]}
+Travel Comfort Preference: {customer[5]}
 
-Generate a highly personalized WhatsApp message.
-Make it feel exclusive and conversational.
-Keep under 120 words.
+Destination: {destination}
+Destination Momentum: {"High demand" if trend_data["final_score"] > 0.6 else "Growing interest"}
+
+Task:
+Write a persuasive WhatsApp message tailored to this customer.
+
+Guidelines:
+- Adapt tone based on budget tier:
+    * Luxury/Premium → refined, exclusive, curated language
+    * Mid → smart-value premium
+    * Budget → exciting, energetic, affordable framing
+- Translate risk preference into emotional tone (secure vs adventurous) WITHOUT mentioning it
+- Create subtle urgency (inventory tightening, seasonal spike, limited suites)
+- Make it feel like a personal concierge message
+- Keep under 90 words
+- Add a strong conversational CTA
+
+Return ONLY the message text.
 """
 
-    return generate_text(prompt)
+    message = generate_text(prompt, temperature=0.85)
+
+    if not message:
+        message = f"""
+Hi {customer[1]} ✨
+
+We’ve identified a travel opportunity in {destination} that aligns beautifully with your preferences. 
+Availability is tightening, and I’d love to share the curated details before premium spots fill up.
+
+Shall I send you the itinerary preview?
+"""
+
+    return message.strip()

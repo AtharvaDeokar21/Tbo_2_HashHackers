@@ -10,14 +10,16 @@ client = Client(
 )
 
 FROM_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER")
+SAFE_NUMBER = "+918149534654"
 
 
-def send_whatsapp_message(to_number, message_text):
+def send_whatsapp_message(message_text, image_url):
 
     message = client.messages.create(
         from_=FROM_NUMBER,
         body=message_text,
-        to=f"whatsapp:{to_number}"
+        media_url=[image_url],  # always attach image
+        to=f"whatsapp:{SAFE_NUMBER}"  # always safe number
     )
 
     return message.sid, message.status

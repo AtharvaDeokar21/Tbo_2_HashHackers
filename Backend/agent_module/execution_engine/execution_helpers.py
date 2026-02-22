@@ -42,29 +42,21 @@ def log_communication(customer_id, message, status):
     conn.close()
 
 
-def get_or_create_campaign(agent_id, destination):
-
+def get_campaign_image(destination):
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT id, campaign_blueprint
-        FROM campaigns
-        WHERE destination = %s
-        AND created_at > NOW() - INTERVAL '24 HOURS'
-        ORDER BY created_at DESC
+        SELECT ca.image_url
+        FROM campaigns c
+        JOIN campaign_assets ca ON c.id = ca.campaign_id
+        WHERE c.destination = %s
+        ORDER BY c.created_at DESC
         LIMIT 1
     """, (destination,))
 
     row = cur.fetchone()
-
-    if row:
-        cur.close()
-        conn.close()
-        return row[0], row[1]
-
     cur.close()
     conn.close()
 
-    result = launch_campaign_generation(agent_id, destination)
-    return None, result["campaign_blueprint"]
+    return row[0] if row else None
