@@ -12,7 +12,7 @@ def get_customer_destination(customer_id):
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT t.destination
+        SELECT t.destination_city
         FROM trips t
         JOIN customers c ON t.customer_id = c.id
         WHERE c.id = %s

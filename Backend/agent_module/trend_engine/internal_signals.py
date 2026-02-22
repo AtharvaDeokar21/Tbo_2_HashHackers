@@ -25,14 +25,14 @@ def search_spike(destination):
 
     cur.execute("""
         SELECT COUNT(*) FROM trips
-        WHERE destination = %s
+        WHERE destination_city = %s
         AND created_at >= NOW() - INTERVAL '7 days'
     """, (destination,))
     current = cur.fetchone()[0]
 
     cur.execute("""
         SELECT COUNT(*) FROM trips
-        WHERE destination = %s
+        WHERE destination_city = %s
         AND created_at BETWEEN NOW() - INTERVAL '14 days'
         AND NOW() - INTERVAL '7 days'
     """, (destination,))
@@ -56,7 +56,7 @@ def engagement_spike(destination):
         FROM customer_engagement ce
         JOIN itineraries i ON ce.itinerary_id = i.id
         JOIN trips t ON i.trip_id = t.id
-        WHERE t.destination = %s
+        WHERE t.destination_city = %s
         AND ce.created_at >= NOW() - INTERVAL '7 days'
     """, (destination,))
     current = cur.fetchone()[0]
@@ -66,7 +66,7 @@ def engagement_spike(destination):
         FROM customer_engagement ce
         JOIN itineraries i ON ce.itinerary_id = i.id
         JOIN trips t ON i.trip_id = t.id
-        WHERE t.destination = %s
+        WHERE t.destination_city = %s
         AND ce.created_at BETWEEN NOW() - INTERVAL '14 days'
         AND NOW() - INTERVAL '7 days'
     """, (destination,))
@@ -89,7 +89,7 @@ def business_viability(destination):
         SELECT AVG(i.margin_score), AVG(i.risk_score)
         FROM itineraries i
         JOIN trips t ON i.trip_id = t.id
-        WHERE t.destination = %s
+        WHERE t.destination_city = %s
     """, (destination,))
 
     margin, risk = cur.fetchone()
@@ -112,7 +112,7 @@ def customer_behavior_boost(destination):
         FROM customer_rfm_scores r
         JOIN customers c ON r.customer_id = c.id
         JOIN trips t ON c.id = t.customer_id
-        WHERE t.destination = %s
+        WHERE t.destination_city = %s
         AND r.segment_label = 'High Value'
     """, (destination,))
 

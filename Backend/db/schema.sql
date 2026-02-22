@@ -72,19 +72,7 @@ ALTER TABLE public.agents OWNER TO postgres;
 -- Name: campaigns; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.campaigns (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    agent_id uuid,
-    destination character varying(100),
-    trend_score numeric,
-    confidence_score numeric,
-    momentum_indicator character varying(50),
-    campaign_status character varying(50) DEFAULT 'draft'::character varying,
-    created_at timestamp without time zone DEFAULT now()
-);
 
-
-ALTER TABLE public.campaigns OWNER TO postgres;
 
 --
 -- Name: chat_memory; Type: TABLE; Schema: public; Owner: postgres
