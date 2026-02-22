@@ -1,13 +1,17 @@
 from unittest import result
-
+from execution_engine.customer_processor import fetch_customer
+from execution_engine.execution_helpers import get_customer_destination
+from execution_engine.calling_bulk_executor import build_call_context, execute_bulk_calling
 from flask import Blueprint, request, jsonify
 from execution_engine.whatsapp_bulk_executor import execute_bulk_whatsapp
 from execution_engine.campaign_launch_executor import launch_campaign_generation
 from trend_engine.hybrid_trend_service import update_demand_signal
 from targeting_engine.targeting_service import get_top_targets
+from execution_engine.bluesky_executor import execute_bluesky_posting
 import psycopg2
 import os
 from dotenv import load_dotenv
+from flask import request, Response
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -180,5 +184,76 @@ def bulk_whatsapp():
         return jsonify({"error": "agent_id and customer_ids required"}), 400
 
     result = execute_bulk_whatsapp(agent_id, customer_ids)
+
+    return jsonify(result)
+
+@campaign_bp.route("/call/context", methods=["POST"])
+def eleven_context_webhook():
+
+    customer_id = request.args.get("customer_id")
+
+    if not customer_id:
+        return jsonify({"error": "customer_id missing"}), 400
+
+    customer = fetch_customer(customer_id)
+    destination = get_customer_destination(customer_id)
+
+    context = build_call_context(customer, destination)
+
+    return jsonify({
+        "conversation_initiation_client_data": {
+            "dynamic_variables": {
+                "customer_context": context
+            }
+        }
+    })
+
+@campaign_bp.route("/execution/calling", methods=["POST"])
+def bulk_calling():
+
+    data = request.json
+
+    if not data:
+        return jsonify({"error": "JSON body required"}), 400
+
+    agent_id = data.get("agent_id")
+    customer_ids = data.get("customer_ids")
+
+    if not agent_id or not customer_ids:
+        return jsonify({"error": "agent_id and customer_ids required"}), 400
+
+    try:
+        result = execute_bulk_calling(agent_id, customer_ids)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({
+            "error": "Calling execution failed",
+            "details": str(e)
+        }), 500
+    
+@campaign_bp.route("/call/webhook", methods=["GET", "POST"])
+def call_webhook():
+
+    customer_id = request.args.get("customer_id")
+
+    twiml = f"""
+<Response>
+    <Connect>
+        <Stream url="wss://api.elevenlabs.io/v1/agent-stream?customer_id={customer_id}" />
+    </Connect>
+</Response>
+"""
+    return Response(twiml, mimetype="text/xml")
+
+@campaign_bp.route("/execution/bluesky", methods=["POST"])
+def bluesky_posting():
+
+    data = request.json
+
+    if not data or not data.get("destinations"):
+        return jsonify({"error": "destinations required"}), 400
+
+    result = execute_bluesky_posting(data["destinations"])
 
     return jsonify(result)
