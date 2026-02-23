@@ -2,12 +2,13 @@ import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Instagram, MessageCircle, Mail, Heart, MessageCircle as Comment, Share2 } from 'lucide-react'
-import { useState } from 'react'
+import { Instagram, MessageCircle, Mail, Heart, MessageCircle as Comment, Share2, Phone } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { toast } from "sonner"
 import Image from 'next/image'
 import { set } from 'date-fns'
 import { se } from 'date-fns/locale'
+import { PiButterflyFill } from "react-icons/pi"
 
 interface CreativePreviewPanelProps {
   campaignName: string
@@ -16,6 +17,7 @@ interface CreativePreviewPanelProps {
   whatsappMessage: string
   emailSubject: string
   emailPreview: string
+  destinations: string[]
 }
 
 export function CreativePreviewPanel({
@@ -28,6 +30,14 @@ export function CreativePreviewPanel({
 }: CreativePreviewPanelProps) {
   const [whatsappResult, setWhatsappResult] = useState<any>(null)
   const [sending, setSending] = useState(false)
+  const [blueskyResult, setBlueskyResult] = useState<any>(null)
+  const [posting, setPosting] = useState(false)
+  const [destInput, setDestInput] = useState("")
+  const [callCustomers, setCallCustomers] = useState<any[]>([])
+  const [selectedCallClients, setSelectedCallClients] = useState<string[]>([])
+  const [loadingCallCustomers, setLoadingCallCustomers] = useState(false)
+  const [calling, setCalling] = useState(false)
+  const [callResult, setCallResult] = useState<any>(null)
   const handleSendWhatsApp = async () => {
     try {
       setSending(true)       // 🔥 show loader / disable button
@@ -81,6 +91,103 @@ export function CreativePreviewPanel({
 
     setSending(false)    // 🔥 stop loader
   }
+  const handleBlueskyPost = async (destinations: string[]) => {
+    try {
+      setPosting(true)
+
+      const res = await fetch("http://localhost:5001/api/execution/bluesky", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destinations })
+      })
+
+      const data = await res.json()
+
+      if (!data.results || !data.results.length) {
+        toast.error("Bluesky post generation failed.")
+        setPosting(false)
+        return
+      }
+
+      setBlueskyResult(data.results[0]) // show only first post
+      toast.success(`Generated ${data.total} Bluesky posts`)
+    } catch (err) {
+      toast.error("Error posting to Bluesky.")
+    }
+    setPosting(false)
+  }
+  const fetchCallCustomers = async () => {
+    try {
+      setLoadingCallCustomers(true)
+
+      const agent_id = localStorage.getItem("selectedAgent")
+      if (!agent_id) {
+        toast.error("No agent selected.")
+        return
+      }
+
+      const res = await fetch(`http://localhost:5000/agents/${agent_id}/customers`)
+      const data = await res.json()
+
+      if (!Array.isArray(data)) {
+        toast.error("Failed to fetch customers.")
+        return
+      }
+
+      setCallCustomers(data)
+    } catch {
+      toast.error("Could not fetch customers.")
+    }
+
+    setLoadingCallCustomers(false)
+  }
+
+  // Toggle selection
+  const toggleCallClient = (id: string) => {
+    setSelectedCallClients(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  // Execute calling
+  const handleCalling = async () => {
+    try {
+      if (selectedCallClients.length === 0) {
+        toast.error("No clients selected.")
+        return
+      }
+
+      setCalling(true)
+      const agent_id = localStorage.getItem("selectedAgent")
+
+      const res = await fetch("http://localhost:5001/api/execution/calling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent_id,
+          customer_ids: selectedCallClients
+        })
+      })
+
+      const data = await res.json()
+
+      if (!data?.results?.length) {
+        toast.error("Calling failed.")
+        setCalling(false)
+        return
+      }
+
+      setCallResult(data.results[0])
+      toast.success(`Call triggered for ${data.processed} client(s)`)
+    } catch {
+      toast.error("Error making calls.")
+    }
+
+    setCalling(false)
+  }
+  useEffect(() => {
+    fetchCallCustomers()
+  }, [])
   return (
     <Card className="h-full p-6 bg-card border-border shadow-sm hover:shadow-md transition-shadow">
       <div className="space-y-6">
@@ -89,69 +196,98 @@ export function CreativePreviewPanel({
           <p className="text-sm text-muted-foreground mt-1">See how your campaign appears across channels</p>
         </div>
 
-        <Tabs defaultValue="instagram" className="w-full">
+        <Tabs defaultValue="bluesky" className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-secondary">
-            <TabsTrigger value="instagram" className="flex items-center gap-2">
-              <Instagram size={16} />
-              <span className="hidden sm:inline">Instagram</span>
+            <TabsTrigger value="bluesky" className="flex items-center gap-2">
+              <PiButterflyFill size={16} />
+              <span className="hidden sm:inline">Bluesky</span>
             </TabsTrigger>
-            <TabsTrigger value="story" className="flex items-center gap-2">
-              <MessageCircle size={16} />
-              <span className="hidden sm:inline">Story</span>
-            </TabsTrigger>
+
+
             <TabsTrigger value="whatsapp" className="flex items-center gap-2">
               <MessageCircle size={16} />
               <span className="hidden sm:inline">WhatsApp</span>
             </TabsTrigger>
-            <TabsTrigger value="email" className="flex items-center gap-2">
-              <Mail size={16} />
-              <span className="hidden sm:inline">Email</span>
+
+            <TabsTrigger value="call" className="flex items-center gap-2">
+              <Phone size={16} />
+              <span className="hidden sm:inline">Call</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Instagram Feed Preview */}
-          <TabsContent value="instagram" className="pt-6 space-y-4">
-            <div className="border border-border rounded-lg overflow-hidden bg-black max-w-sm mx-auto">
-              {/* Instagram Header */}
-              <div className="bg-secondary border-b border-border px-4 py-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-400" />
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-foreground">travel_agent_pro</p>
-                  <p className="text-xs text-muted-foreground">Jakarta, Indonesia</p>
-                </div>
-                <span className="text-muted-foreground">•••</span>
-              </div>
+          <TabsContent value="bluesky" className="pt-6 space-y-4">
 
-              {/* Image Placeholder */}
-              <div className="w-full aspect-square bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                <span className="text-muted-foreground text-sm">Campaign Image</span>
-              </div>
-
-              {/* Instagram Actions */}
-              <div className="bg-secondary border-b border-border px-4 py-3 flex gap-4">
-                <Heart size={20} className="text-foreground cursor-pointer hover:text-primary transition-colors" />
-                <Comment size={20} className="text-foreground cursor-pointer hover:text-primary transition-colors" />
-                <Share2 size={20} className="text-foreground cursor-pointer hover:text-primary transition-colors" />
-              </div>
-
-              {/* Caption */}
-              <div className="bg-secondary px-4 py-3 space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">1,234 likes</p>
-                <p className="text-sm text-foreground leading-relaxed">{instagramPost}</p>
-              </div>
+            {/* Destination Input */}
+            <div className="max-w-md mx-auto space-y-2">
+              <label className="text-sm font-medium">Enter Destinations (comma separated)</label>
+              <input
+                type="text"
+                value={destInput}
+                onChange={(e) => setDestInput(e.target.value)}
+                placeholder="e.g. London, Bali, Dubai"
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              />
             </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() =>
+                  handleBlueskyPost(
+                    destInput.split(",").map(d => d.trim()).filter(Boolean)
+                  )
+                }
+                disabled={posting}
+                className={`bg-primary text-primary-foreground px-6 py-2 rounded-lg text-sm font-semibold
+                hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2
+                ${posting ? "opacity-70 cursor-not-allowed" : ""}`}
+              >
+                {posting && (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                )}
+                {posting ? "Generating..." : "Generate Bluesky Posts"}
+              </button>
+            </div>
+
+            {/* Preview Box */}
+            {blueskyResult && (
+              <div className="border border-border rounded-lg overflow-hidden bg-black max-w-sm mx-auto">
+
+                {/* Header */}
+                <div className="bg-secondary border-b border-border px-4 py-3 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-sky-400 to-blue-400" />
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-foreground">travel_agent_pro</p>
+                    <p className="text-xs text-muted-foreground">{blueskyResult.destination}</p>
+                  </div>
+                </div>
+
+                {/* Image */}
+                <div className="w-full aspect-square bg-black flex items-center justify-center">
+                  <Image
+                    src={blueskyResult.image_url}
+                    alt="Post Image"
+                    width={400}
+                    height={0}           // required by TS, but ignored when style has height:auto
+                    style={{ height: "auto" }}
+                    className="object-cover w-full"
+                  />
+                </div>
+
+                {/* Caption */}
+                <div className="bg-secondary px-4 py-3 space-y-2">
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {blueskyResult.caption}
+                  </p>
+                </div>
+
+              </div>
+            )}
           </TabsContent>
 
           {/* Story Preview */}
-          <TabsContent value="story" className="pt-6 space-y-4">
-            <div className="border border-border rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 max-w-sm mx-auto aspect-[9/16] flex flex-col items-center justify-center p-6">
-              <div className="text-center space-y-4">
-                <h3 className="text-2xl font-bold text-foreground">{storyHeadline}</h3>
-                <Badge className="bg-primary text-primary-foreground font-semibold">LIMITED TIME</Badge>
-                <p className="text-sm text-muted-foreground">Swipe up to book now</p>
-              </div>
-            </div>
-          </TabsContent>
+
 
           {/* WhatsApp Preview */}
           {/* WhatsApp Preview */}
@@ -217,23 +353,80 @@ export function CreativePreviewPanel({
           </TabsContent>
 
           {/* Email Preview */}
-          <TabsContent value="email" className="pt-6 space-y-4">
-            <div className="border border-border rounded-lg bg-white dark:bg-secondary max-w-2xl mx-auto overflow-hidden">
-              {/* Email Header */}
-              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border px-6 py-8 space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">From: travel_agent_pro@example.com</p>
-                <p className="text-xs font-semibold text-muted-foreground">Subject: {emailSubject}</p>
-              </div>
+          <TabsContent value="call" className="pt-6 space-y-6">
 
-              {/* Email Body */}
-              <div className="px-6 py-8 space-y-4">
-                <p className="text-sm text-foreground leading-relaxed">Dear Traveler,</p>
-                <p className="text-sm text-foreground leading-relaxed">{emailPreview}</p>
-                <button className="bg-primary text-primary-foreground px-6 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
-                  Book Now
+            {/* LOADING TEXT */}
+            {loadingCallCustomers && (
+              <p className="text-center text-sm text-muted-foreground">
+                Loading customers…
+              </p>
+            )}
+
+            {/* CUSTOMER CHECKBOX LIST */}
+            {!loadingCallCustomers && callCustomers.length > 0 && (
+              <div className="space-y-3 max-w-md mx-auto">
+                <h3 className="font-semibold text-lg text-center">
+                  Select Clients to Call
+                </h3>
+
+                {callCustomers.map((c) => (
+                  <label
+                    key={c.customer_id}
+                    className="flex items-center gap-3 p-3 border border-border rounded-md cursor-pointer hover:bg-secondary"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCallClients.includes(c.customer_id)}
+                      onChange={() => toggleCallClient(c.customer_id)}
+                      className="w-4 h-4"
+                    />
+
+                    <div>
+                      <p className="font-medium">{c.name}</p>
+                      <p className="text-xs text-muted-foreground">{c.email}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {/* CALL BUTTON */}
+            {!loadingCallCustomers && callCustomers.length > 0 && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={handleCalling}
+                  disabled={calling}
+                  className={`bg-primary text-primary-foreground px-6 py-2 rounded-lg text-sm font-semibold
+        hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2
+        ${calling ? "opacity-70 cursor-not-allowed" : ""}`}
+                >
+                  {calling && (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  )}
+                  {calling ? "Calling…" : "Call Selected Clients"}
                 </button>
               </div>
-            </div>
+            )}
+
+            {/* RESULT PREVIEW */}
+            {callResult && (
+              <div className="border border-border rounded-lg bg-secondary p-4 max-w-md mx-auto space-y-3 shadow-sm">
+
+                <h3 className="font-semibold text-lg">Call Triggered</h3>
+
+                <div className="bg-black text-white p-3 rounded-md">
+                  <p><strong>Customer:</strong> {callResult.customer_name}</p>
+                  <p><strong>Destination:</strong> {callResult.destination}</p>
+                  <p><strong>Status:</strong> {callResult.status}</p>
+
+                  {callResult.error && (
+                    <p className="text-red-400 text-sm mt-1">{callResult.error}</p>
+                  )}
+                </div>
+
+              </div>
+            )}
+
           </TabsContent>
         </Tabs>
 
