@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { ChevronRight, LayoutDashboard, Package, Megaphone, Users, BarChart3, Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,8 +20,45 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(collapsed)
+  const [userName, setUserName] = useState('TBOAnalytica')
+  const [userInitial, setUserInitial] = useState('T')
   const router = useRouter()
   const pathname = usePathname()
+
+  useEffect(() => {
+    // Fetch customer name from database
+    const fetchCustomerName = async () => {
+      try {
+        const customerId = localStorage.getItem('selectedCustomer')
+        const agentId = localStorage.getItem('selectedAgent')
+        
+        if (!customerId || !agentId) {
+          return
+        }
+        
+        const res = await fetch(`http://localhost:5000/agents/${agentId}/customers`)
+        const customers = await res.json()
+        
+        const customer = customers.find((c: any) => c.customer_id === customerId)
+        if (customer) {
+          setUserName(customer.name)
+          setUserInitial(customer.name.charAt(0).toUpperCase())
+        }
+      } catch (err) {
+        console.error('Failed to fetch customer name:', err)
+      }
+    }
+    
+    fetchCustomerName()
+    
+    // Also listen for storage changes to update in real-time
+    const handleStorageChange = () => {
+      fetchCustomerName()
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
 
   return (
     <aside
@@ -35,9 +72,9 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground font-bold text-sm">G</span>
+              <span className="text-sidebar-primary-foreground font-bold text-sm">{userInitial}</span>
             </div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">Growth</h1>
+            <h1 className="font-bold text-lg text-sidebar-foreground">{userName}</h1>
           </div>
         )}
         <button

@@ -15,7 +15,7 @@ interface PromptInputPanelProps {
 const EXAMPLE_PROMPTS = [
   {
     title: 'Maldives Getaway',
-    text: 'Create a ready-to-book travel package for a family of 4 (2 adults, 2 children), traveling to Maldives from July 1–8, 2024, with a mid-range budget, focus on beach relaxation and water activities.',
+    text: 'Client wants 7 day London trip from pune in April with high budget with good hotels and minimal layovers',
   },
   {
     title: 'Luxury Honeymoon',
@@ -24,6 +24,10 @@ const EXAMPLE_PROMPTS = [
   {
     title: 'Cultural Adventure',
     text: 'Create a cultural tour for 2 adults exploring Japan for 10 days (June 20-30, 2024), with focus on temples, local experiences, traditional cuisine, and budget-conscious hotels.',
+  },
+  {
+    title: 'London Trip',
+    text: 'Create a 7-day London trip from Pune in April for 2 adults with high budget, focus on good 5-star hotels, fine dining experiences, theater shows, and minimal layovers.',
   },
 ]
 

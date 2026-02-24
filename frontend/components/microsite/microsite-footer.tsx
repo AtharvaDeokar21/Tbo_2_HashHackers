@@ -80,7 +80,7 @@ export function MicrositeFooter({
 
       {/* Bottom Section */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-        <p>© 2024 Growth Intelligence. All rights reserved.</p>
+        <p>© 2024 TBOAnalytica. All rights reserved.</p>
         <p>Powered by AI-driven travel intelligence</p>
       </div>
     </footer>

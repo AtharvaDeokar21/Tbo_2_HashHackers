@@ -15,11 +15,11 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-8 py-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">G</span>
+              <span className="text-primary-foreground font-bold text-sm">T</span>
             </div>
-            <h1 className="text-3xl font-bold text-foreground">Growth Intelligence</h1>
+            <h1 className="text-3xl font-bold text-foreground">TBOAnalytica</h1>
           </div>
-          <p className="text-muted-foreground text-sm">Travel Intelligence Platform for Growth Agents</p>
+          <p className="text-muted-foreground text-sm">Travel Intelligence Platform for Travel Agents</p>
         </div>
       </header>
 

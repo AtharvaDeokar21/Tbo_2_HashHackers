@@ -27,7 +27,7 @@ export default function Dashboard() {
       <DashboardWrapper>
         {/* Welcome Section */}
         <div>
-          <h1 className="text-5xl font-bold text-foreground tracking-tight">Growth Intelligence Dashboard</h1>
+          <h1 className="text-5xl font-bold text-foreground tracking-tight">TBOAnalytica Dashboard</h1>
           <p className="text-muted-foreground mt-2 text-base leading-relaxed">
             Discover emerging travel trends and growth opportunities in real-time
           </p>
@@ -39,7 +39,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-6">
             <OpportunityCard
               destination="Bali, Indonesia"
-              imageUrl="/destinations/bali.jpg"
+              imageUrl="https://imgs.search.brave.com/K_Lva_qENAVM9rbvRlNTBFh1qd9KXs5Y42DWqFmEMGE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/dHJhdmVsYW5kbGVp/c3VyZS5jb20vdGht/Yi9KYWpodU5wZHRJ/ZURjc01ZTGxuRmpT/MWVsUjA9LzE1MDB4/MC9maWx0ZXJzOm5v/X3Vwc2NhbGUoKTpt/YXhfYnl0ZXMoMTUw/MDAwKTpzdHJpcF9p/Y2MoKS9UQUwtYmFs/aS1pbmRvbmVzaWEt/Y29hc3QtdWx1d2F0/dS10ZW1wbGUtQkFM/SVRPUElTTEFORDA1/MjUtYTVlODMzODU3/ZGQxNDA0YzlkNzE2/NjdmZDUwODgzY2Qu/anBn"
               trend="rising"
               confidence={89}
               reasoning="Strong domestic travel recovery with 34% increase in bookings over last month"
@@ -53,7 +53,7 @@ export default function Dashboard() {
             />
             <OpportunityCard
               destination="Iceland"
-              imageUrl="/destinations/iceland.jpg"
+              imageUrl="https://imgs.search.brave.com/dr2T4oMYgMl8YTqfXcgE7exeLYtwhZwuPKmgK5wldqc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/aW50cmVwaWR0cmF2/ZWwuY29tL2FkdmVu/dHVyZXMvd3AtY29u/dGVudC91cGxvYWRz/LzIwMTgvMTIvSW50/cmVwaWQtVHJhdmVs/LUljZWxhbmRfSm9r/dWxhcnNvbi1HbGFj/aWVyX0dsYWNpZXIt/SGlrZS1XYXRlcmZh/bGxfUnlhbi1Cb2x0/b243NDcxLmpwZw"
               trend="peaking"
               confidence={76}
               reasoning="Peak summer season approaching with limited availability and premium pricing potential"
@@ -67,7 +67,7 @@ export default function Dashboard() {
             />
             <OpportunityCard
               destination="Portugal"
-              imageUrl="/destinations/portugal.jpg"
+              imageUrl="https://images.unsplash.com/photo-1508804185872-d7badad00f7d?w=500&h=300&fit=crop"
               trend="stable"
               confidence={81}
               reasoning="Consistent mid-tier demand with excellent value proposition for budget-conscious travelers"

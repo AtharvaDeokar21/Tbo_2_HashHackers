@@ -3,15 +3,13 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-import 'leaflet/dist/leaflet.css'
-
 
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Growth Intelligence Dashboard',
+  title: 'TBOAnalytica',
   description: 'Real-time travel destination intelligence and growth opportunities for travel agents',
   generator: 'v0.app',
   viewport: {
