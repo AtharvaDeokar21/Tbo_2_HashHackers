@@ -304,7 +304,7 @@ export function CreativePreviewPanel({
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Activity className="w-4 h-4 text-blue-600" />
-                  Live Preview
+                  Glimpse of the Post
                 </h3>
                 <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-bold">✓ Published</Badge>
               </div>

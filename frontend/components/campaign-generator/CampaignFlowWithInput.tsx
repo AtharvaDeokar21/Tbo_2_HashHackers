@@ -116,8 +116,8 @@ export default function CampaignFlowWithInput() {
                 onKeyDown={(e) => e.key === 'Enter' && launchCampaign()}
                 className="flex-1 py-2.5 px-4 text-sm font-medium"
               />
-              <Button 
-                onClick={launchCampaign} 
+              <Button
+                onClick={launchCampaign}
                 disabled={loading || !city.trim()}
                 className="gap-2 px-8 py-2.5 font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 disabled:opacity-50 transition-all flex items-center"
               >
@@ -134,12 +134,12 @@ export default function CampaignFlowWithInput() {
                 )}
               </Button>
             </div>
-            {!localStorage.getItem("selectedAgent") && (
+            {/* {!localStorage.getItem("selectedAgent") && (
               <div className="flex items-start gap-3 mt-3 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">Select an agent from the dashboard to create campaigns</p>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </Card>
@@ -149,7 +149,7 @@ export default function CampaignFlowWithInput() {
         <Card className="overflow-hidden border border-border/60 bg-card shadow-sm">
           {/* Header Image Section */}
           {campaignBlueprint.image_url && (
-            <div className="relative w-full h-56 bg-gradient-to-br from-primary/10 to-primary/5 overflow-hidden">
+            <div className="relative w-full h-[600px] bg-gradient-to-br from-primary/10 to-primary/5 overflow-hidden">
               <Image
                 src={campaignBlueprint.image_url}
                 alt="Campaign Image"
@@ -265,14 +265,28 @@ export default function CampaignFlowWithInput() {
             {campaignBlueprint.offer_structure && (
               <>
                 <Separator />
+
                 <div>
-                  <h4 className="font-bold text-sm text-foreground mb-2 flex items-center gap-2">
+                  <h4 className="font-bold text-sm text-foreground mb-3 flex items-center gap-2">
                     <Target className="w-4 h-4 text-primary" />
                     Offer Structure
                   </h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {campaignBlueprint.offer_structure}
-                  </p>
+
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 to-muted/5 border border-border/50 space-y-2">
+                    {Object.entries(campaignBlueprint.offer_structure).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex items-start gap-2"
+                      >
+                        <span className="text-xs font-bold uppercase text-primary tracking-wide min-w-[120px]">
+                          {key.replace(/_/g, " ")}
+                        </span>
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </>
             )}

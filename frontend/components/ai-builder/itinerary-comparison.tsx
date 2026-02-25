@@ -14,11 +14,11 @@ interface ItineraryComparisonProps {
 const getTypeIcon = (type: string) => {
   switch (type) {
     case 'best-match':
-      return <TrendingUp size={24} className="text-primary" />
+      return <TrendingUp size={22} className="text-primary" />
     case 'best-budget':
-      return <DollarSign size={24} className="text-primary/70" />
+      return <DollarSign size={22} className="text-emerald-600" />
     case 'best-comfort':
-      return <Crown size={24} className="text-primary/60" />
+      return <Crown size={22} className="text-amber-600" />
     default:
       return null
   }
@@ -37,91 +37,170 @@ const getTypeLabel = (type: string) => {
   }
 }
 
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'best-match':
-      return 'bg-sidebar-primary/10 border-sidebar-primary/20'
-    case 'best-budget':
-      return 'bg-green-50 border-green-200'
-    case 'best-comfort':
-      return 'bg-amber-50 border-amber-200'
-    default:
-      return 'bg-gray-50 border-gray-200'
-  }
-}
-
 export function ItineraryComparison({ itineraries, onSelectItinerary }: ItineraryComparisonProps) {
   return (
     <section className="space-y-8">
       {/* Section Title */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-3">Your Personalized Itineraries</h2>
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          Three options tailored to different preferences. Click on any itinerary to explore detailed day-by-day plans, flights, hotels, and chat with our AI assistant.
+        <h2 className="text-2xl font-bold text-foreground mb-2 tracking-tight">
+          Your Personalized Itineraries
+        </h2>
+        <p className="text-muted-foreground text-sm">
+          Three options tailored to different preferences. Select one to view the full breakdown.
         </p>
       </div>
 
-      {/* Itineraries Grid */}
+      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {itineraries.map((itinerary) => (
           <Card
             key={itinerary.id}
             onClick={() => onSelectItinerary(itinerary)}
-            className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-border"
+            className="
+    overflow-hidden 
+    cursor-pointer 
+    transition-all 
+    duration-500 
+    group 
+    border border-white/20
+    hover:border-primary/40 
+    rounded-2xl 
+    bg-white/40 
+    backdrop-blur-xl 
+    shadow-[0_8px_30px_rgb(0,0,0,0.08)]
+    hover:shadow-[0_12px_40px_rgb(0,0,0,0.15)]
+    hover:-translate-y-1
+  "
           >
-            {/* Type Header Bar */}
-            <div className={`h-1 ${itinerary.type === 'best-match' ? 'bg-primary' :
-              itinerary.type === 'best-budget' ? 'bg-primary/60' :
-                'bg-primary/40'
-              }`} />
+            {itinerary === itineraries[0] && (
+              <div className="
+      absolute 
+      top-3 right-3 
+      bg-primary/90 
+      text-white 
+      text-xs 
+      font-semibold 
+      px-3 py-1.5 
+      rounded-full 
+      shadow-lg 
+      backdrop-blur-sm
+    ">
+                Best Match
+              </div>
+            )}
+            {/* Top Luxury Accent Bar */}
+            <div
+              className="
+      h-1.5 
+      bg-gradient-to-r 
+      from-primary 
+      via-primary/60 
+      to-primary/30
+    "
+            />
 
-            {/* Content */}
-            <div className="p-6 space-y-4">
-              {/* Badge and Title */}
-              <div className="space-y-3">
+            <div className="p-7 space-y-6">
 
-                <div>
-                  <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{itinerary.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">{itinerary.description}</p>
-                </div>
+              {/* Title */}
+              <div>
+                <h3 className="
+        text-xl 
+        font-semibold 
+        tracking-tight 
+        text-foreground 
+        group-hover:text-primary 
+        transition-colors
+        text-center
+      ">
+                  {itinerary.title}
+                </h3>
+
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                  {itinerary.description}
+                </p>
               </div>
 
-              {/* Rating */}
-              <div className="flex items-center gap-2 pt-1">
-                <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+              {/* Score */}
+              <div className="flex flex-col gap-1 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground tracking-wide">
+                    Trip fit score
+                  </span>
+
+                  <span className="text-sm font-bold text-foreground">
+                    {(itinerary.final_score * 100).toFixed(0)}%
+                  </span>
+                </div>
+
+                <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-primary"
+                    className="
+        h-full 
+        bg-gradient-to-r 
+        from-primary 
+        to-primary/70 
+        transition-all 
+        duration-700 
+        ease-out
+      "
                     style={{ width: `${(itinerary.final_score ?? 0) * 100}%` }}
                   />
                 </div>
-
-                <span className="text-sm font-semibold text-foreground">
-                  {(itinerary.final_score * 100).toFixed(0)}%
-                </span>
               </div>
 
-              {/* Price and Duration Section */}
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground font-semibold mb-1">DURATION</p>
-                  <p className="text-lg font-bold text-foreground">{itinerary.duration}</p>
-                  <p className="text-xs text-muted-foreground">days</p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-3 text-center">
-                  <p className="text-xs text-muted-foreground font-semibold mb-1">PRICE</p>
-                  <p className="text-lg font-bold text-primary">
-                    ₹{itinerary.price.toLocaleString('en-IN')}
+              {/* Duration + Price Block */}
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div className="
+        rounded-xl 
+        p-4 
+        text-center 
+        bg-white/50 
+        shadow-inner 
+        border border-white/30
+      ">
+                  <p className="text-[10px] tracking-wide text-muted-foreground font-medium">
+                    DURATION
                   </p>
-                  <p className="text-xs text-muted-foreground">total</p>
+                  <p className="text-2xl font-bold text-foreground">{itinerary.duration}</p>
+                  <p className="text-[11px] text-muted-foreground">days</p>
+                </div>
+
+                <div className="
+        rounded-xl 
+        p-4 
+        text-center 
+        bg-white/50 
+        shadow-inner 
+        border border-white/30
+      ">
+                  <p className="text-[10px] tracking-wide text-muted-foreground font-medium">
+                    PRICE
+                  </p>
+                  <p className="text-2xl font-bold text-primary">
+                    ₹{itinerary.price?.toLocaleString('en-IN')}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">total</p>
                 </div>
               </div>
-
-
             </div>
 
-            {/* CTA Button */}
-            <div className="px-6 pb-6">
-              <Button className="w-full group-hover:bg-primary/90 transition-colors">
+            {/* CTA */}
+            <div className="px-7 pb-6">
+              <Button
+                className="
+        w-full 
+        rounded-xl 
+        py-5 
+        text-base 
+        font-medium 
+        bg-primary/90 
+        hover:bg-primary 
+        transition-all 
+        duration-300 
+        shadow-md 
+        hover:shadow-lg
+      "
+              >
                 View Details
               </Button>
             </div>

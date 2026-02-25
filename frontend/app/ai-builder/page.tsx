@@ -69,6 +69,19 @@ export interface HotelInfo {
 }
 
 export default function AIBuilder() {
+  const toRoman = (num: number) => {
+    const map: [number, string][] = [
+      [5, "V"], [4, "IV"], [1, "I"]
+    ];
+    let result = "";
+    for (const [value, numeral] of map) {
+      while (num >= value) {
+        result += numeral;
+        num -= value;
+      }
+    }
+    return result;
+  };
   const [prompt, setPrompt] = useState('')
   const [itineraries, setItineraries] = useState<Itinerary[]>([])
   const [selectedItinerary, setSelectedItinerary] = useState<Itinerary | null>(null)
@@ -110,8 +123,8 @@ export default function AIBuilder() {
       const mappedItineraries = data.itineraries.map((it: any, index: number) => ({
         id: it.itinerary_id,
         type: index === 0 ? "best-match" : index === 1 ? "best-budget" : "best-comfort",
-        title: `Itinerary ${index + 1}`,
-        description: "AI-generated itinerary",
+        title: `Itinerary ${toRoman(index + 1)}`,
+        description: "AI-generated personalized itinerary",
         duration: data.day_wise_plan?.days?.length || 0,
         price: it.total_price,
         rating: it.final_score * 5, // scale 0-1 → 0-5

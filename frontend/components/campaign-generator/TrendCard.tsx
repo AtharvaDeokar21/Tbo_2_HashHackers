@@ -71,7 +71,7 @@ export default function TrendCard() {
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               {key.replace(/_/g, ' ')}
             </p>
-            <p className="text-sm font-semibold text-foreground leading-snug">{value}</p>
+            <p className="text-sm font-semibold text-foreground leading-snug">{Math.ceil(value * 100)}</p>
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function TrendCard() {
                 </div>
               </div>
               <Badge className={`px-4 py-2 text-base font-bold border rounded-xl ${getTrendBadgeColor(trend.trend_score)}`}>
-                {trend.trend_score}/100
+                {trend.trend_score * 100}/100
               </Badge>
             </div>
             
@@ -161,7 +161,7 @@ export default function TrendCard() {
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-sm flex items-center gap-2 text-foreground">
                 <Zap className="w-4 h-4 text-primary" />
-                Market Signals
+                Market Signals (out of 100)
               </h4>
             </div>
             
@@ -173,22 +173,7 @@ export default function TrendCard() {
           </div>
 
           {/* Footer - Quick Stats */}
-          <div className="px-6 py-4 bg-muted/30 border-t border-border/40 grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground font-semibold mb-1">CONFIDENCE</p>
-              <p className="text-lg font-bold text-primary">{trend.trend_score}%</p>
-            </div>
-            <Separator orientation="vertical" />
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground font-semibold mb-1">STATUS</p>
-              <p className="text-sm font-bold text-emerald-600">Active Trend</p>
-            </div>
-            <Separator orientation="vertical" />
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground font-semibold mb-1">OPPORTUNITIES</p>
-              <p className="text-sm font-bold text-blue-600">High Potential</p>
-            </div>
-          </div>
+          
         </Card>
       )}
 

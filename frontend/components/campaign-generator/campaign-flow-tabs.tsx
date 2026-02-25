@@ -47,34 +47,31 @@ export function CampaignFlowTabs({ campaignDays }: CampaignFlowTabsProps) {
     <div className="space-y-6">
       <Tabs defaultValue="day-1" className="w-full">
         {/* Enhanced Tab Navigation */}
-        <div className="bg-gradient-to-r from-muted/50 to-muted/20 p-4 rounded-xl border border-border/60 mb-6 overflow-hidden">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {campaignDays.map((day) => {
-              const stageInfo = FUNNEL_STAGE_COLORS[day.funnelStage || 'awareness']
-              return (
-                <TabsTrigger
-                  key={`day-${day.day}`}
-                  value={`day-${day.day}`}
-                  className="flex-shrink-0 px-4 py-2.5 rounded-lg border border-border/40 bg-background hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary transition-all font-semibold"
-                >
-                  <div className="text-center">
-                    <div className="text-xs font-bold mb-0.5">{stageInfo.emoji}</div>
-                    <div className="text-sm font-bold">Day {day.day}</div>
-                    <div className="text-xs opacity-75 mt-0.5">{stageInfo.label}</div>
-                  </div>
-                </TabsTrigger>
-              )
-            })}
-          </div>
-        </div>
+        <TabsList className="bg-gradient-to-r from-muted/50 to-muted/20 p-4 rounded-xl border border-border/60 mb-6 overflow-x-auto flex gap-2 scrollbar-hide">
+          {campaignDays.map((day) => {
+            return (
+              <TabsTrigger
+                key={`day-${day.day}`}
+                value={`day-${day.day}`}
+                className="flex-shrink-0 px-4 py-2.5 rounded-lg border border-border/40 bg-background 
+                   hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground 
+                   data-[state=active]:border-primary transition-all font-semibold"
+              >
+                <div className="text-center">
+                  <div className="text-sm font-bold">Day {day.day}</div>
+                </div>
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
 
         {/* Tab Contents */}
         {campaignDays.map((day) => {
           const stageInfo = FUNNEL_STAGE_COLORS[day.funnelStage || 'awareness']
           return (
-            <TabsContent 
-              key={`content-${day.day}`} 
-              value={`day-${day.day}`} 
+            <TabsContent
+              key={`content-${day.day}`}
+              value={`day-${day.day}`}
               className="space-y-5 animate-in fade-in-50 duration-300"
             >
               {/* Day Header Card */}
@@ -83,15 +80,13 @@ export function CampaignFlowTabs({ campaignDays }: CampaignFlowTabsProps) {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-3xl font-bold font-mono">Day {day.day}</span>
-                      <Badge className={`px-3 py-1 text-xs font-bold ${stageInfo.badgeColor}`}>
-                        {stageInfo.label}
-                      </Badge>
+                      
                     </div>
                     {day.objective && (
                       <p className="text-sm font-medium text-foreground">{day.objective}</p>
                     )}
                   </div>
-                  {day.suggestedTime && (
+                  {/* {day.suggestedTime && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -105,11 +100,11 @@ export function CampaignFlowTabs({ campaignDays }: CampaignFlowTabsProps) {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  )}
+                  )} */}
                 </div>
 
                 {/* Metrics Row */}
-                <Separator className="my-4" />
+                {/* <Separator className="my-4" /> */}
                 <div className="grid grid-cols-2 gap-3">
                   {day.dayConfidence && (
                     <TooltipProvider>
@@ -233,7 +228,7 @@ export function CampaignFlowTabs({ campaignDays }: CampaignFlowTabsProps) {
                         <span className="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-400">{day.expectedEngagement}%</span>
                       </div>
                       <div className="w-full h-2 bg-emerald-200 dark:bg-emerald-900 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-500"
                           style={{ width: `${day.expectedEngagement}%` }}
                         />
