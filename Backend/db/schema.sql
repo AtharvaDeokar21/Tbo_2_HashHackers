@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict sCG23xlMmvBlbPy3l7NJC0pWH1QPP2P7KLStFv1olypQj6xptoXeRKYZ6s1Udp3
+\restrict lNuDDD6v8o6BfePgKdnivRLobZJywd9GB1xYogGydFtEk8UBFizLdKT2TkkquI9
 
 -- Dumped from database version 18.2
 -- Dumped by pg_dump version 18.2
@@ -69,10 +69,43 @@ CREATE TABLE public.agents (
 ALTER TABLE public.agents OWNER TO postgres;
 
 --
+-- Name: campaign_assets; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.campaign_assets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    campaign_id uuid NOT NULL,
+    asset_type character varying(50),
+    platform character varying(50),
+    content_text text,
+    image_url text,
+    scheduled_at timestamp without time zone,
+    engagement_metrics jsonb,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT campaign_assets_platform_check CHECK (((platform)::text = ANY (ARRAY[('instagram'::character varying)::text, ('facebook'::character varying)::text, ('google'::character varying)::text, ('whatsapp'::character varying)::text, ('email'::character varying)::text])))
+);
+
+
+ALTER TABLE public.campaign_assets OWNER TO postgres;
+
+--
 -- Name: campaigns; Type: TABLE; Schema: public; Owner: postgres
 --
 
+CREATE TABLE public.campaigns (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    agent_id uuid,
+    destination character varying(100),
+    trend_score numeric,
+    confidence_score numeric,
+    momentum_indicator character varying(50),
+    campaign_status character varying(50) DEFAULT 'draft'::character varying,
+    created_at timestamp without time zone DEFAULT now(),
+    campaign_blueprint jsonb
+);
 
+
+ALTER TABLE public.campaigns OWNER TO postgres;
 
 --
 -- Name: chat_memory; Type: TABLE; Schema: public; Owner: postgres
@@ -88,6 +121,62 @@ CREATE TABLE public.chat_memory (
 
 
 ALTER TABLE public.chat_memory OWNER TO postgres;
+
+--
+-- Name: communication_logs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.communication_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    customer_id uuid NOT NULL,
+    channel character varying(50) NOT NULL,
+    message_text text,
+    response_text text,
+    call_transcript text,
+    created_at timestamp without time zone DEFAULT now(),
+    status character varying(50),
+    CONSTRAINT communication_logs_channel_check CHECK (((channel)::text = ANY (ARRAY[('whatsapp'::character varying)::text, ('email'::character varying)::text, ('call'::character varying)::text])))
+);
+
+
+ALTER TABLE public.communication_logs OWNER TO postgres;
+
+--
+-- Name: customer_engagement; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.customer_engagement (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    customer_id uuid NOT NULL,
+    itinerary_id uuid NOT NULL,
+    viewed_at timestamp without time zone,
+    saved_at timestamp without time zone,
+    inquiry_sent boolean DEFAULT false,
+    abandoned_at timestamp without time zone,
+    last_contacted_at timestamp without time zone,
+    engagement_score numeric,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.customer_engagement OWNER TO postgres;
+
+--
+-- Name: customer_rfm_scores; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.customer_rfm_scores (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    customer_id uuid NOT NULL,
+    recency_score numeric,
+    frequency_score numeric,
+    monetary_score numeric,
+    segment_label character varying(100),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.customer_rfm_scores OWNER TO postgres;
 
 --
 -- Name: customers; Type: TABLE; Schema: public; Owner: postgres
@@ -107,6 +196,24 @@ CREATE TABLE public.customers (
 
 
 ALTER TABLE public.customers OWNER TO postgres;
+
+--
+-- Name: demand_signals; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.demand_signals (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    destination character varying(100),
+    booking_surge_percent numeric,
+    search_spike_percent numeric,
+    avg_price_change_percent numeric,
+    volatility_index numeric,
+    momentum_indicator character varying(50),
+    updated_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.demand_signals OWNER TO postgres;
 
 --
 -- Name: event_logs; Type: TABLE; Schema: public; Owner: postgres
@@ -311,6 +418,14 @@ ALTER TABLE ONLY public.agents
 
 
 --
+-- Name: campaign_assets campaign_assets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.campaign_assets
+    ADD CONSTRAINT campaign_assets_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: campaigns campaigns_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -327,11 +442,51 @@ ALTER TABLE ONLY public.chat_memory
 
 
 --
+-- Name: communication_logs communication_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.communication_logs
+    ADD CONSTRAINT communication_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: customer_engagement customer_engagement_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customer_engagement
+    ADD CONSTRAINT customer_engagement_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: customer_rfm_scores customer_rfm_scores_customer_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customer_rfm_scores
+    ADD CONSTRAINT customer_rfm_scores_customer_id_key UNIQUE (customer_id);
+
+
+--
+-- Name: customer_rfm_scores customer_rfm_scores_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customer_rfm_scores
+    ADD CONSTRAINT customer_rfm_scores_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: customers customers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.customers
     ADD CONSTRAINT customers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: demand_signals demand_signals_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.demand_signals
+    ADD CONSTRAINT demand_signals_pkey PRIMARY KEY (id);
 
 
 --
@@ -407,6 +562,90 @@ ALTER TABLE ONLY public.trips
 
 
 --
+-- Name: idx_campaign_agent_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_campaign_agent_id ON public.campaigns USING btree (agent_id);
+
+
+--
+-- Name: idx_campaign_assets_campaign_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_campaign_assets_campaign_id ON public.campaign_assets USING btree (campaign_id);
+
+
+--
+-- Name: idx_campaign_assets_platform; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_campaign_assets_platform ON public.campaign_assets USING btree (platform);
+
+
+--
+-- Name: idx_campaign_destination; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_campaign_destination ON public.campaigns USING btree (destination);
+
+
+--
+-- Name: idx_campaign_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_campaign_status ON public.campaigns USING btree (campaign_status);
+
+
+--
+-- Name: idx_communication_channel; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_communication_channel ON public.communication_logs USING btree (channel);
+
+
+--
+-- Name: idx_communication_customer; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_communication_customer ON public.communication_logs USING btree (customer_id);
+
+
+--
+-- Name: idx_customer_engagement_customer_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_customer_engagement_customer_id ON public.customer_engagement USING btree (customer_id);
+
+
+--
+-- Name: idx_customer_engagement_itinerary_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_customer_engagement_itinerary_id ON public.customer_engagement USING btree (itinerary_id);
+
+
+--
+-- Name: idx_customer_engagement_last_contacted; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_customer_engagement_last_contacted ON public.customer_engagement USING btree (last_contacted_at);
+
+
+--
+-- Name: idx_demand_destination; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_demand_destination ON public.demand_signals USING btree (destination);
+
+
+--
+-- Name: idx_demand_updated_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_demand_updated_at ON public.demand_signals USING btree (updated_at);
+
+
+--
 -- Name: idx_flight_itinerary_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -428,11 +667,58 @@ CREATE INDEX idx_itinerary_trip_id ON public.itineraries USING btree (trip_id);
 
 
 --
+-- Name: idx_rfm_customer_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_rfm_customer_id ON public.customer_rfm_scores USING btree (customer_id);
+
+
+--
+-- Name: campaign_assets campaign_assets_campaign_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.campaign_assets
+    ADD CONSTRAINT campaign_assets_campaign_id_fkey FOREIGN KEY (campaign_id) REFERENCES public.campaigns(id) ON DELETE CASCADE;
+
+
+--
 -- Name: campaigns campaigns_agent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.campaigns
     ADD CONSTRAINT campaigns_agent_id_fkey FOREIGN KEY (agent_id) REFERENCES public.agents(id) ON DELETE CASCADE;
+
+
+--
+-- Name: communication_logs communication_logs_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.communication_logs
+    ADD CONSTRAINT communication_logs_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: customer_engagement customer_engagement_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customer_engagement
+    ADD CONSTRAINT customer_engagement_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: customer_engagement customer_engagement_itinerary_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customer_engagement
+    ADD CONSTRAINT customer_engagement_itinerary_id_fkey FOREIGN KEY (itinerary_id) REFERENCES public.itineraries(id) ON DELETE CASCADE;
+
+
+--
+-- Name: customer_rfm_scores customer_rfm_scores_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.customer_rfm_scores
+    ADD CONSTRAINT customer_rfm_scores_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id) ON DELETE CASCADE;
 
 
 --
@@ -511,5 +797,5 @@ ALTER TABLE ONLY public.trips
 -- PostgreSQL database dump complete
 --
 
-\unrestrict sCG23xlMmvBlbPy3l7NJC0pWH1QPP2P7KLStFv1olypQj6xptoXeRKYZ6s1Udp3
+\unrestrict lNuDDD6v8o6BfePgKdnivRLobZJywd9GB1xYogGydFtEk8UBFizLdKT2TkkquI9
 
