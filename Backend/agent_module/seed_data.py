@@ -13,7 +13,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise Exception("DATABASE_URL not found in .env")
 
-
 fake = Faker()
 
 DESTINATIONS = [
@@ -21,24 +20,30 @@ DESTINATIONS = [
     "Maldives", "Paris", "Tokyo", "Goa"
 ]
 
+AIRPORTS = ["DEL", "BOM", "BLR", "MAA", "HYD", "PNQ", "CCU"]
+
 def random_date_within(days=90):
     return datetime.now() - timedelta(days=random.randint(0, days))
 
 def connect():
     return psycopg2.connect(DATABASE_URL)
 
+
+# -------------------------
+#  SEED AGENTS
+# -------------------------
 def seed_agents(conn):
     cur = conn.cursor()
     agent_ids = []
 
-    for _ in range(10):
+    for _ in range(9):
         agent_id = str(uuid4())
         agent_ids.append(agent_id)
 
         cur.execute("""
             INSERT INTO agents (id, name, email, phone, agency_name, city)
             VALUES (%s, %s, %s, %s, %s, %s)
-        """,(
+        """, (
             agent_id,
             fake.name(),
             fake.unique.email(),
@@ -51,6 +56,16 @@ def seed_agents(conn):
     cur.close()
     return agent_ids
 
+
+# -------------------------
+#  SEED CUSTOMERS
+# -------------------------
+def random_budget_range():
+    ranges = [
+        "50k-1L", "1L-2L", "2L-5L", "5L-10L"
+    ]
+    return random.choice(ranges)
+
 def seed_customers(conn, agent_ids):
     cur = conn.cursor()
     customer_ids = []
@@ -61,7 +76,8 @@ def seed_customers(conn, agent_ids):
 
         cur.execute("""
             INSERT INTO customers
-            (id, agent_id, name, email, phone, source_city, budget_range, risk_preference, created_at)
+            (id, agent_id, name, email, phone, source_city,
+             budget_range, risk_preference, created_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             customer_id,
@@ -70,7 +86,7 @@ def seed_customers(conn, agent_ids):
             fake.unique.email(),
             fake.msisdn()[:15],
             fake.city(),
-            random.choice(["Low", "Medium", "High"]),
+            random_budget_range(),
             random.choice(["Conservative", "Balanced", "Aggressive"]),
             random_date_within()
         ))
@@ -79,6 +95,10 @@ def seed_customers(conn, agent_ids):
     cur.close()
     return customer_ids
 
+
+# -------------------------
+#  SEED TRIPS  (FIXED)
+# -------------------------
 def seed_trips(conn, customer_ids):
     cur = conn.cursor()
     trip_ids = []
@@ -90,19 +110,25 @@ def seed_trips(conn, customer_ids):
         departure = random_date_within()
         return_date = departure + timedelta(days=random.randint(3, 10))
 
+        origin_airport = random.choice(AIRPORTS)
+        destination_airport = random.choice(AIRPORTS)
+        destination_city = random.choice(DESTINATIONS)
+
         cur.execute("""
             INSERT INTO trips
-            (id, customer_id, origin, destination, departure_date,
-             return_date, duration_days, budget, travel_style, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (id, customer_id, origin_airport, destination_airport,
+             destination_city, departure_date, return_date,
+             duration_days, budget, travel_style, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             trip_id,
             random.choice(customer_ids),
-            "DEL",
-            random.choice(DESTINATIONS),
+            origin_airport,
+            destination_airport,
+            destination_city,
             departure,
             return_date,
-            random.randint(3, 10),
+            (return_date - departure).days,
             random.randint(50000, 300000),
             random.choice(["Luxury", "Budget", "Family"]),
             random_date_within()
@@ -112,6 +138,10 @@ def seed_trips(conn, customer_ids):
     cur.close()
     return trip_ids
 
+
+# -------------------------
+#  SEED ITINERARIES
+# -------------------------
 def seed_itineraries(conn, trip_ids):
     cur = conn.cursor()
     itinerary_ids = []
@@ -121,14 +151,10 @@ def seed_itineraries(conn, trip_ids):
             itinerary_id = str(uuid4())
             itinerary_ids.append(itinerary_id)
 
-            margin = random.uniform(0.3, 0.9)
-            risk = random.uniform(0.2, 0.8)
-
             cur.execute("""
                 INSERT INTO itineraries
-                (id, trip_id, total_price, cost_score,
-                 comfort_score, risk_score, margin_score,
-                 final_score, confidence_score,
+                (id, trip_id, total_price, cost_score, comfort_score,
+                 risk_score, margin_score, final_score, confidence_score,
                  risk_level, margin_band, tradeoff_summary, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s)
@@ -138,8 +164,8 @@ def seed_itineraries(conn, trip_ids):
                 random.randint(60000, 400000),
                 random.random(),
                 random.random(),
-                risk,
-                margin,
+                random.random(),
+                random.random(),
                 random.random(),
                 random.random(),
                 random.choice(["Low", "Medium", "High"]),
@@ -152,6 +178,10 @@ def seed_itineraries(conn, trip_ids):
     cur.close()
     return itinerary_ids
 
+
+# -------------------------
+#  SEED ENGAGEMENT
+# -------------------------
 def seed_engagement(conn, customer_ids, itinerary_ids):
     cur = conn.cursor()
 
@@ -177,6 +207,10 @@ def seed_engagement(conn, customer_ids, itinerary_ids):
     conn.commit()
     cur.close()
 
+
+# -------------------------
+#  SEED MARGIN & RISK
+# -------------------------
 def seed_margin_and_risk(conn, itinerary_ids):
     cur = conn.cursor()
 
@@ -212,6 +246,10 @@ def seed_margin_and_risk(conn, itinerary_ids):
     conn.commit()
     cur.close()
 
+
+# -------------------------
+#  MAIN
+# -------------------------
 def main():
     conn = connect()
 

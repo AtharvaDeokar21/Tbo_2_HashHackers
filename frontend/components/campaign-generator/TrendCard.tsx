@@ -144,7 +144,7 @@ export default function TrendCard() {
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-500"
-                  style={{ width: `${trend.trend_score}%` }}
+                  style={{ width: `${trend.trend_score * 100}%` }}
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2">
