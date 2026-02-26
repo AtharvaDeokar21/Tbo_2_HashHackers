@@ -6,7 +6,7 @@ from creative_engine.image_quality_filter import is_valid_image
 
 load_dotenv()
 
-SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+SERPAPI_KEY = os.getenv("SERP_API_KEY")
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
 
 
@@ -23,6 +23,7 @@ def fetch_from_serp(query):
 
     response = requests.get(url, params=params)
     data = response.json()
+    print("SerpAPI Response:", data)  # Debugging line
 
     images = data.get("images_results", [])
 
@@ -53,6 +54,7 @@ def fetch_from_pexels(query):
     )
 
     data = response.json()
+    print("Pexels API Response:", data)  # Debugging line
 
     for photo in data.get("photos", []):
         image_url = photo["src"]["large"]

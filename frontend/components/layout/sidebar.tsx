@@ -9,9 +9,7 @@ const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { id: 'builder', label: 'AI Builder', icon: Package, href: '/ai-builder' },
   { id: 'campaigns', label: 'Campaigns', icon: Megaphone, href: '/campaigns' },
-  { id: 'leads', label: 'Leads', icon: Users, href: '/leads' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/analytics' },
-  { id: 'microsite', label: 'Microsite', icon: Globe, href: '/microsite' },
 ]
 
 interface SidebarProps {

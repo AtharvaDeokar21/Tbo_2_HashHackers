@@ -15,7 +15,7 @@ interface PromptInputPanelProps {
 const EXAMPLE_PROMPTS = [
   {
     title: 'London Trip',
-    text: 'Client wants 7 day London trip from pune in April with high budget with good hotels and minimal layovers',
+    text: 'Client wants 7 day London trip from Bombay in April with high budget with good hotels and minimal layovers',
   },
   {
     title: 'Luxury Honeymoon',
