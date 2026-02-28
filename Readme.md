@@ -1,4 +1,5 @@
-
+# Team HashHackers
+---
 # 🌍 TBOAnalytica: AI Travel Growth & Decision Platform
 
 An AI-powered Travel Operating System that combines:
@@ -141,8 +142,8 @@ python main.py
 
 ```bash
 cd frontend
-npm i --legacy-peer-deps
-npm start
+npm i
+npm run dev
 ```
 The product will now be accessible at:
 ```
