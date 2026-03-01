@@ -83,7 +83,7 @@ def process_single_call(agent_id, customer_id):
 
         # Twilio outbound call
         call = client.calls.create(
-            to="+918452890044",  
+            to= os.getenv("TEST_CALLER_NUMBER"),  
             from_=TWILIO_CALLER_ID,
             url=f" https://difficultly-unsmokeable-rickey.ngrok-free.dev/api/call/webhook?customer_id={customer_id}"
         )
