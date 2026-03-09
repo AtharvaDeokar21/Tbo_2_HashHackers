@@ -6,7 +6,31 @@ from execution_engine.bluesky_service import post_to_bluesky
 from execution_engine.bluesky_content_generator import generate_bluesky_caption
 import requests
 import tempfile
+import os
 
+
+from PIL import Image
+def compress_image(input_path, max_size=1_000_000):
+    img = Image.open(input_path).convert("RGB")
+
+    quality = 95
+    output_path = input_path.replace(".png", "_compressed.jpg")
+
+    while quality > 20:
+        img.save(output_path, "JPEG", quality=quality, optimize=True)
+
+        if os.path.getsize(output_path) <= max_size:
+            return output_path
+
+        quality -= 5
+
+    # If still too large, resize
+    width, height = img.size
+    img = img.resize((width // 2, height // 2))
+
+    img.save(output_path, "JPEG", quality=85, optimize=True)
+
+    return output_path
 
 def process_single_destination(destination):
 
@@ -50,8 +74,10 @@ def process_single_destination(destination):
         temp_file.write(response.content)
         temp_file.close()
 
+        compressed_path = compress_image(temp_file.name)
+
         # Post to Bluesky
-        post = post_to_bluesky(caption, temp_file.name)
+        post = post_to_bluesky(caption, compressed_path)
 
         result["post_uri"] = post["uri"]
 

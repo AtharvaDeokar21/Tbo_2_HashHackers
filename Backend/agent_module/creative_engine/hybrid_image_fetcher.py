@@ -23,7 +23,7 @@ def fetch_from_serp(query):
 
     response = requests.get(url, params=params)
     data = response.json()
-    print("SerpAPI Response:", data)  # Debugging line
+    # print("SerpAPI Response:", data)  # Debugging line
 
     images = data.get("images_results", [])
 
@@ -54,7 +54,7 @@ def fetch_from_pexels(query):
     )
 
     data = response.json()
-    print("Pexels API Response:", data)  # Debugging line
+    # print("Pexels API Response:", data)  # Debugging line
 
     for photo in data.get("photos", []):
         image_url = photo["src"]["large"]
