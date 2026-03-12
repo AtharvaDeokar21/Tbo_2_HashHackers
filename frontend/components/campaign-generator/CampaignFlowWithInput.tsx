@@ -21,6 +21,8 @@ export default function CampaignFlowWithInput() {
   // full metadata to display above tabs
   const [campaignBlueprint, setCampaignBlueprint] = useState<any>(null)
 
+  const [showFullCampaign, setShowFullCampaign] = useState(false)
+
   const launchCampaign = async () => {
     const agent = localStorage.getItem("selectedAgent")
     if (!agent) {
@@ -61,6 +63,7 @@ export default function CampaignFlowWithInput() {
       setCampaignBlueprint({
         image_url: data?.image_url,
         campaign_identity: blueprint.campaign_identity,
+        simple_agent_playbook: blueprint.simple_agent_playbook,
         agent_notes: blueprint.agent_notes,
         content_themes: blueprint.content_themes,
         conversion_triggers: blueprint.conversion_triggers,
@@ -150,14 +153,16 @@ export default function CampaignFlowWithInput() {
         <Card className="overflow-hidden border border-border/60 bg-card shadow-sm">
           {/* Header Image Section */}
           {campaignBlueprint.image_url && (
-            <div className="relative w-full h-[600px] bg-gradient-to-br from-primary/10 to-primary/5 overflow-hidden">
+            <div className="relative w-full bg-gradient-to-br from-primary/10 to-primary/5 overflow-hidden">
               <Image
                 src={campaignBlueprint.image_url}
                 alt="Campaign Image"
-                fill
-                className="object-cover hover:scale-105 transition-transform duration-300"
+                width={1200}
+                height={800}
+                className="w-full h-auto hover:scale-105 transition-transform duration-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
             </div>
           )}
 
@@ -165,17 +170,15 @@ export default function CampaignFlowWithInput() {
           <div className="p-6 space-y-6">
             {/* Campaign Identity Section */}
             <div className="space-y-3">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-1">
-                    {campaignBlueprint.campaign_identity?.name}
-                  </h2>
-                  <p className="text-base font-semibold text-primary italic">
-                    "{campaignBlueprint.campaign_identity?.tagline}"
-                  </p>
-                </div>
-                <CheckCircle className="w-6 h-6 text-emerald-500 flex-shrink-0" />
+
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-1">
+                  {campaignBlueprint.campaign_identity}
+                </h2>
+
               </div>
+
+
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {campaignBlueprint.campaign_identity?.objective}
               </p>
@@ -183,129 +186,206 @@ export default function CampaignFlowWithInput() {
 
             <Separator />
 
-            {/* Key Insights Grid - Enhanced */}
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-primary" />
-                Campaign Insights
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Emotional Hook */}
-                <div className="p-4 rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-muted/5 hover:border-primary/40 transition-all">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">💭</span>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-semibold text-sm text-foreground mb-1">Emotional Hook</h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                        {campaignBlueprint.emotional_hook}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            {campaignBlueprint.simple_agent_playbook && (
+              <div className="space-y-4">
 
-                {/* Positioning Angle */}
-                <div className="p-4 rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-muted/5 hover:border-primary/40 transition-all">
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">🎯</span>
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-semibold text-sm text-foreground mb-1">Positioning</h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                        {campaignBlueprint.positioning_angle}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Content Themes */}
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <Star className="w-4 h-4 text-primary" />
-                Content Themes
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {campaignBlueprint.content_themes?.map((theme: any, idx: number) => (
-                  <Badge key={idx} variant="secondary" className="font-medium border border-border/60 bg-muted/50 hover:bg-muted transition-colors">
-                    {theme}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Agent Strategy Notes - Highlighted */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-primary/8 via-primary/4 to-transparent border border-primary/20">
-              <h4 className="font-bold text-sm text-foreground mb-2 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-primary" />
-                AI Strategy Notes
-              </h4>
-              <p className="text-sm text-foreground leading-relaxed">{campaignBlueprint.agent_notes}</p>
-            </div>
-
-            {/* Value Propositions */}
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                Value Propositions
-              </h3>
-              <div className="space-y-2">
-                {campaignBlueprint.value_proposition_stack?.map((item: any, i: number) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/40 hover:border-primary/30 transition-colors">
-                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-primary/20 text-primary text-xs font-bold rounded-md">
-                      {i + 1}
-                    </span>
-                    <p className="text-sm text-foreground leading-relaxed">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Additional Metadata */}
-            {campaignBlueprint.offer_structure && (
-              <>
                 <Separator />
 
                 <div>
-                  <h4 className="font-bold text-sm text-foreground mb-3 flex items-center gap-2">
-                    <Target className="w-4 h-4 text-primary" />
-                    Offer Structure
-                  </h4>
+                  <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
+                    <Rocket className="w-4 h-4 text-primary" />
+                    Campaign Playbook
+                  </h3>
 
-                  <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 to-muted/5 border border-border/50 space-y-2">
-                    {Object.entries(campaignBlueprint.offer_structure).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className="flex items-start gap-2"
-                      >
-                        <span className="text-xs font-bold uppercase text-primary tracking-wide min-w-[120px]">
-                          {key.replace(/_/g, " ")}
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {campaignBlueprint.simple_agent_playbook.campaign_summary}
+                  </p>
+                </div>
+
+                {/* Who to Target */}
+                <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
+                  <h4 className="text-xs font-bold uppercase text-primary mb-1">
+                    Target Audience
+                  </h4>
+                  <p className="text-sm text-foreground">
+                    {campaignBlueprint.simple_agent_playbook.who_to_target}
+                  </p>
+                </div>
+
+                {/* Daily Actions */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Daily Actions</h4>
+                  <ul className="space-y-1">
+                    {campaignBlueprint.simple_agent_playbook.daily_actions?.map((action: any, i: number) => (
+                      <li key={i} className="text-sm text-muted-foreground">
+                        • {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Pitch */}
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <h4 className="text-sm font-semibold mb-1">How to Pitch</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {campaignBlueprint.simple_agent_playbook.how_to_pitch}
+                  </p>
+                </div>
+
+                {/* Quick Tips */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Sales Tips</h4>
+                  <ul className="space-y-1">
+                    {campaignBlueprint.simple_agent_playbook.quick_sales_tips?.map((tip: any, i: number) => (
+                      <li key={i} className="text-sm text-muted-foreground">
+                        ✓ {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+              </div>
+            )}
+
+            {!showFullCampaign && (
+              <div className="pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFullCampaign(true)}
+                  className="w-full"
+                >
+                  View Full Campaign Strategy
+                </Button>
+              </div>
+            )}
+
+            {showFullCampaign && (
+              <>
+                {/* Key Insights Grid - Enhanced */}
+                <div>
+                  <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary" />
+                    Campaign Insights
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Emotional Hook */}
+                    <div className="p-4 rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-muted/5 hover:border-primary/40 transition-all">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl">💭</span>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-sm text-foreground mb-1">Emotional Hook</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                            {campaignBlueprint.emotional_hook}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Positioning Angle */}
+                    <div className="p-4 rounded-xl border border-border/60 bg-gradient-to-br from-primary/5 to-muted/5 hover:border-primary/40 transition-all">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl">🎯</span>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-sm text-foreground mb-1">Positioning</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                            {campaignBlueprint.positioning_angle}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Themes */}
+                <div>
+                  <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                    <Star className="w-4 h-4 text-primary" />
+                    Content Themes
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {campaignBlueprint.content_themes?.map((theme: any, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="font-medium border border-border/60 bg-muted/50 hover:bg-muted transition-colors">
+                        {theme}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Agent Strategy Notes - Highlighted */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-primary/8 via-primary/4 to-transparent border border-primary/20">
+                  <h4 className="font-bold text-sm text-foreground mb-2 flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary" />
+                    AI Strategy Notes
+                  </h4>
+                  <p className="text-sm text-foreground leading-relaxed">{campaignBlueprint.agent_notes}</p>
+                </div>
+
+                {/* Value Propositions */}
+                <div>
+                  <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    Value Propositions
+                  </h3>
+                  <div className="space-y-2">
+                    {campaignBlueprint.value_proposition_stack?.map((item: any, i: number) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/40 border border-border/40 hover:border-primary/30 transition-colors">
+                        <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-primary/20 text-primary text-xs font-bold rounded-md">
+                          {i + 1}
                         </span>
-                        <p className="text-sm text-foreground leading-relaxed">
-                          {value}
-                        </p>
+                        <p className="text-sm text-foreground leading-relaxed">{item}</p>
                       </div>
                     ))}
                   </div>
                 </div>
-              </>
-            )}
 
-            {campaignBlueprint.urgency_message && (
-              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                <h4 className="font-bold text-sm text-amber-900 dark:text-amber-400 mb-2">⏰ Urgency Message</h4>
-                <p className="text-sm text-amber-800 dark:text-amber-300 italic font-medium">
-                  "{campaignBlueprint.urgency_message}"
-                </p>
-              </div>
+                {/* Additional Metadata */}
+                {campaignBlueprint.offer_structure && (
+                  <>
+                    <Separator />
+
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground mb-3 flex items-center gap-2">
+                        <Target className="w-4 h-4 text-primary" />
+                        Offer Structure
+                      </h4>
+
+                      <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 to-muted/5 border border-border/50 space-y-2">
+                        {Object.entries(campaignBlueprint.offer_structure).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="flex items-start gap-2"
+                          >
+                            <span className="text-xs font-bold uppercase text-primary tracking-wide min-w-[120px]">
+                              {key.replace(/_/g, " ")}
+                            </span>
+                            <p className="text-sm text-foreground leading-relaxed">
+                              {value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {campaignBlueprint.urgency_message && (
+                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                    <h4 className="font-bold text-sm text-amber-900 dark:text-amber-400 mb-2">⏰ Urgency Message</h4>
+                    <p className="text-sm text-amber-800 dark:text-amber-300 italic font-medium">
+                      "{campaignBlueprint.urgency_message}"
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </Card>
       )}
 
       {/* ---- 7-DAY PLAN SECTION ---- */}
-      {campaignDays.length > 0 && (
+      {campaignDays.length > 0 && showFullCampaign && (
         <>
           <div className="space-y-2">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -319,6 +399,19 @@ export default function CampaignFlowWithInput() {
           </Card>
         </>
       )}
+      {showFullCampaign && (
+        <div className="pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowFullCampaign(false)}
+            className="w-full"
+          >
+            View Less
+          </Button>
+        </div>
+      )}
+
+
     </div>
   )
 }

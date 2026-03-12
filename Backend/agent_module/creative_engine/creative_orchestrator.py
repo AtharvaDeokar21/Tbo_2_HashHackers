@@ -62,16 +62,36 @@ Return JSON:
         overlay_data["cta"]
     )
 
-    # Step 5: Upload to Cloudinary
+    MAX_WIDTH = 1600
+    if final_image.width > MAX_WIDTH:
+        ratio = MAX_WIDTH / final_image.width
+        new_height = int(final_image.height * ratio)
+        final_image = final_image.resize((MAX_WIDTH, new_height), Image.LANCZOS)
+
+    # Convert to RGB if image has alpha (JPEG doesn't support alpha)
+    if final_image.mode in ("RGBA", "P"):
+        final_image = final_image.convert("RGB")
+
     img_bytes = io.BytesIO()
-    final_image.save(img_bytes, format="PNG")
+
+    # Save compressed JPEG
+    final_image.save(
+        img_bytes,
+        format="JPEG",
+        quality=85,
+        optimize=True,
+        progressive=True
+    )
+
     img_bytes.seek(0)
 
+    # Step 6: Upload to Cloudinary
     upload = cloudinary.uploader.upload(
         img_bytes,
         folder="campaign_assets",
         public_id=f"campaign_{uuid.uuid4()}",
-        overwrite=True
+        overwrite=True,
+        resource_type="image"
     )
 
     return upload["secure_url"]
