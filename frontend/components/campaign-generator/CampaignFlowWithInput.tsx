@@ -50,6 +50,7 @@ export default function CampaignFlowWithInput() {
 
       const data = await res.json()
       console.log("BACKEND RESPONSE:", data)
+      
 
       const blueprint = data?.campaign_blueprint
       if (!blueprint) {
@@ -92,6 +93,7 @@ export default function CampaignFlowWithInput() {
 
       setCampaignDays(transformed)
       toast.success("Campaign generated successfully!")
+      localStorage.setItem("campaign", JSON.stringify(data))
 
     } catch (err) {
       console.error("Launch campaign error:", err)
@@ -100,6 +102,7 @@ export default function CampaignFlowWithInput() {
 
     setLoading(false)
     localStorage.setItem("city", city)
+    
   }
 
   return (

@@ -163,29 +163,58 @@ export function CreativePreviewPanel({
       }
 
       setCalling(true)
+
       const agent_id = localStorage.getItem("selectedAgent")
+      const storedCampaign = localStorage.getItem("campaign")
+
+      if (!storedCampaign) {
+        toast.error("No campaign found.")
+        setCalling(false)
+        return
+      }
+
+      const campaign = JSON.parse(storedCampaign)
+
+      const payload = {
+        agent_id,
+        customer_ids: selectedCallClients,
+        campaign_blueprint: campaign.campaign_blueprint,
+        destination: campaign.destination
+      }
+
+      console.log("CALL PAYLOAD:", payload)
 
       const res = await fetch("http://localhost:5001/api/execution/calling", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agent_id,
-          customer_ids: selectedCallClients
-        })
+        body: JSON.stringify(payload)
       })
 
       const data = await res.json()
 
-      if (!data?.results?.length) {
+      console.log("CALL RESPONSE:", data)
+
+      if (!data?.calls_started) {
         toast.error("Calling failed.")
         setCalling(false)
         return
       }
 
-      setCallResult(data.results[0])
-      setExecutionMetrics(prev => ({ ...prev, calls: data.processed || 1 }))
-      toast.success(`Call triggered for ${data.processed} client(s)`)
-    } catch {
+      setCallResult({
+        customer_name: callCustomers.find(c => c.customer_id === selectedCallClients[0])?.name,
+        destination: payload.destination,
+        status: "initiated"
+      })
+
+      setExecutionMetrics(prev => ({
+        ...prev,
+        calls: data.calls_started
+      }))
+
+      toast.success(`Call triggered for ${data.calls_started} client(s)`)
+
+    } catch (err) {
+      console.error(err)
       toast.error("Error making calls.")
     }
 

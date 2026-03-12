@@ -8,6 +8,9 @@ from execution_engine.campaign_launch_executor import launch_campaign_generation
 from trend_engine.hybrid_trend_service import update_demand_signal
 from targeting_engine.targeting_service import get_top_targets
 from execution_engine.bluesky_executor import execute_bluesky_posting
+from execution_engine.vapi_service import create_vapi_call
+from execution_engine.campaign_parser import extract_call_brief
+from core.db_conn import get_db
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -210,28 +213,64 @@ def eleven_context_webhook():
     })
 
 @campaign_bp.route("/execution/calling", methods=["POST"])
-def bulk_calling():
+def start_campaign_calls():
 
     data = request.json
 
-    if not data:
-        return jsonify({"error": "JSON body required"}), 400
+    agent_id = data["agent_id"]
+    customer_ids = data["customer_ids"]
 
-    agent_id = data.get("agent_id")
-    customer_ids = data.get("customer_ids")
+    # pass full request to parser
+    call_brief = extract_call_brief(data)
 
-    if not agent_id or not customer_ids:
-        return jsonify({"error": "agent_id and customer_ids required"}), 400
+    conn = get_db()
+    cursor = conn.cursor()
 
-    try:
-        result = execute_bulk_calling(agent_id, customer_ids)
-        return jsonify(result)
+    calls_started = []
 
-    except Exception as e:
-        return jsonify({
-            "error": "Calling execution failed",
-            "details": str(e)
-        }), 500
+    for cid in customer_ids:
+
+        cursor.execute(
+            "SELECT name, phone FROM customers WHERE id = %s",
+            (cid,)
+        )
+
+        result = cursor.fetchone()
+
+        if not result:
+            continue
+
+        name, phone = result
+
+        metadata = {
+            "destination": call_brief["destination"],
+            "discount": call_brief["discount"],
+            "price": call_brief["price"],
+            "bonus": call_brief["bonus"],
+            "urgency": call_brief["urgency"],
+            "pitch": call_brief["pitch"],
+            "value_props": ", ".join(call_brief["value_props"])
+        }
+
+        call = create_vapi_call(phone, metadata)
+
+        calls_started.append(call)
+
+        cursor.execute(
+            """
+            INSERT INTO communication_logs
+            (customer_id, channel, message_text, status)
+            VALUES (%s, 'call', %s, 'initiated')
+            """,
+            (cid, f"Campaign call about {call_brief['destination']}")
+        )
+
+    conn.commit()
+
+    return jsonify({
+        "calls_started": len(calls_started),
+        "details": calls_started
+    })
     
 @campaign_bp.route("/call/webhook", methods=["GET", "POST"])
 def call_webhook():
