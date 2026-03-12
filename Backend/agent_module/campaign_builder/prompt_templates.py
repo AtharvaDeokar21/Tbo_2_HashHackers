@@ -28,6 +28,34 @@ Return structured JSON with:
 13. retargeting_strategy
 14. agent_notes
 
+15. simple_agent_playbook
+
+This field is for travel agents with little marketing knowledge.
+Explain the campaign in **very simple language** so a basic agent can execute it.
+
+Structure it as:
+
+simple_agent_playbook:
+{{
+  "campaign_summary": "...simple explanation of the campaign idea...",
+  "who_to_target": "...which customers to focus on...",
+  "how_to_pitch": "...how the agent should talk to customers...",
+  "daily_actions": [
+      "Day 1: ...simple step...",
+      "Day 2: ...simple step...",
+      "Day 3: ...simple step...",
+      "Day 4: ...simple step...",
+      "Day 5: ...simple step...",
+      "Day 6: ...simple step...",
+      "Day 7: ...simple step..."
+  ],
+  "quick_sales_tips": [
+      "...easy persuasion tip...",
+      "...how to handle hesitation...",
+      "...how to close booking..."
+  ]
+}}
+
 Return ONLY valid JSON.
 Do not include explanation.
 Do not include markdown.
