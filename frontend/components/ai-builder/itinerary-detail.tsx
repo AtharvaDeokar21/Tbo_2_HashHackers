@@ -18,7 +18,31 @@ interface ItineraryDetailProps {
   itinerary: Itinerary   // only has basic info
   onBack: () => void
 }
+function requiresBooking(day: { title?: string; activities?: string[]; notes?: string }) {
+  const text = [
+    day.title || "",
+    ...(day.activities || []),
+    day.notes || ""
+  ]
+    .join(" ")
+    .toLowerCase();
 
+  const keywords = [
+    "book tickets",
+    "book in advance",
+    "pre-book",
+    "reserve",
+    "reservation",
+    "tickets",
+    "entry fee",
+    "ticket required",
+    "buy tickets",
+    "purchase tickets",
+    "advance booking"
+  ];
+
+  return keywords.some(k => text.includes(k));
+}
 export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
 
   const [fullData, setFullData] = useState<any | null>(null)
@@ -290,17 +314,31 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
             {/* Daywise plan */}
             <TabsContent value="itinerary" className="space-y-4">
               {fullItinerary.dayByDay.length > 0 ? (
-                fullItinerary.dayByDay.map((day, idx) => (
-                  <Card key={day.day} className="p-6 border-l-4 border-l-primary">
-                    <h4 className="text-lg font-bold">Day {day.day}: {day.title}</h4>
-                    {day.notes && <p className="text-sm italic text-muted-foreground pt-1">{day.notes}</p>}
-                    <div className="pt-3 space-y-2">
-                      {day.activities.map((a, i) => (
-                        <p key={i} className="text-sm">{a}</p>
-                      ))}
-                    </div>
-                  </Card>
-                ))
+                fullItinerary.dayByDay.map((day, idx) => {
+                  const needsBooking = requiresBooking(day)
+                  return (
+                    <Card key={day.day} className={`p-6 border-l-4 ${needsBooking ? "border-l-orange-500 bg-orange-50/40" : "border-l-primary"
+                      }`}>
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-lg font-bold">
+                          Day {day.day}: {day.title}
+                        </h4>
+
+                        {needsBooking && (
+                          <Badge className="bg-orange-100 text-orange-700 border-orange-300">
+                            🎟 Booking Required
+                          </Badge>
+                        )}
+                      </div>
+                      {day.notes && <p className="text-sm italic text-muted-foreground pt-1">{day.notes}</p>}
+                      <div className="pt-3 space-y-2">
+                        {day.activities.map((a, i) => (
+                          <p key={i} className="text-sm">{a}</p>
+                        ))}
+                      </div>
+                    </Card>
+                  )
+                })
               ) : (
                 <Card className="p-12 text-center text-muted-foreground border-dashed">
                   <AlertCircle className="mx-auto mb-3 opacity-50" size={32} />
