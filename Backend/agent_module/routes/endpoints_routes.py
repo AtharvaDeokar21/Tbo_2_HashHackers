@@ -179,11 +179,12 @@ def bulk_whatsapp():
     data = request.json
     agent_id = data.get("agent_id")
     customer_ids = data.get("customer_ids")
+    city = data.get("city")
 
-    if not agent_id or not customer_ids:
-        return jsonify({"error": "agent_id and customer_ids required"}), 400
+    if not agent_id or not customer_ids or not city:
+        return jsonify({"error": "agent_id, customer_ids, and city required"}), 400
 
-    result = execute_bulk_whatsapp(agent_id, customer_ids)
+    result = execute_bulk_whatsapp(agent_id, customer_ids, city)
 
     return jsonify(result)
 

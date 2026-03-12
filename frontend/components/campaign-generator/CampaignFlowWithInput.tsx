@@ -96,6 +96,7 @@ export default function CampaignFlowWithInput() {
     }
 
     setLoading(false)
+    localStorage.setItem("city", city)
   }
 
   return (

@@ -13,7 +13,7 @@ from trend_engine.hybrid_trend_service import update_demand_signal
 from creative_engine.creative_orchestrator import build_creative
 
 
-def process_single_customer(agent_id, customer_id):
+def process_single_customer(agent_id, customer_id, city):
 
     result = {
         "customer_id": customer_id,
@@ -34,10 +34,8 @@ def process_single_customer(agent_id, customer_id):
 
         result["customer_name"] = customer[1]
 
-        destination = get_customer_destination(customer_id)
-        if not destination:
-            result["error"] = "No destination found"
-            return result
+        destination = city
+        
 
         result["destination"] = destination
 
@@ -76,7 +74,7 @@ def process_single_customer(agent_id, customer_id):
     return result
 
 
-def execute_bulk_whatsapp(agent_id, customer_ids):
+def execute_bulk_whatsapp(agent_id, customer_ids, city):
 
     print(f"Starting bulk WhatsApp execution for {len(customer_ids)} customers")
 
@@ -84,7 +82,7 @@ def execute_bulk_whatsapp(agent_id, customer_ids):
 
     with ThreadPoolExecutor(max_workers=6) as executor:
         futures = {
-            executor.submit(process_single_customer, agent_id, cid): cid
+            executor.submit(process_single_customer, agent_id, cid, city): cid
             for cid in customer_ids
         }
 

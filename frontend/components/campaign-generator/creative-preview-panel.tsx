@@ -63,12 +63,14 @@ export function CreativePreviewPanel({
       }
 
       const customer_ids = customers.map(c => c.customer_id)
+      const city = localStorage.getItem("city")
+
 
       // STEP 2 — send WhatsApp
       const res2 = await fetch("http://localhost:5001/api/execution/whatsapp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agent_id, customer_ids })
+        body: JSON.stringify({ agent_id, customer_ids, city })
       })
 
       const result = await res2.json()
@@ -101,7 +103,7 @@ export function CreativePreviewPanel({
       const res = await fetch("http://localhost:5001/api/execution/bluesky", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destinations })
+        body: JSON.stringify({ destinations: [localStorage.getItem("city")] })
       })
 
       const data = await res.json()
@@ -262,16 +264,16 @@ export function CreativePreviewPanel({
               <div>
                 <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-2.5 flex items-center gap-2 block">
                   <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  Target Destinations
+                  Target Destination
                 </label>
-                <input
+                {/* <input
                   type="text"
                   value={destInput}
                   onChange={(e) => setDestInput(e.target.value)}
                   placeholder="Enter destinations (e.g., London, Bali, Dubai, Paris)..."
                   className="w-full px-4 py-2.5 border border-border/60 rounded-lg bg-background text-foreground text-sm font-medium focus:ring-2 focus:ring-blue-500/40 outline-none transition-all"
-                />
-                <p className="text-xs text-muted-foreground mt-2">Comma-separated list of destinations to generate posts for</p>
+                /> */}
+                <p className="text-xs font-bold text-foreground mt-2">{localStorage.getItem("city") || "No city selected"}</p>
               </div>
 
               <button
@@ -280,7 +282,7 @@ export function CreativePreviewPanel({
                     destInput.split(",").map(d => d.trim()).filter(Boolean)
                   )
                 }
-                disabled={posting || !destInput.trim()}
+                disabled={posting || !localStorage.getItem("city")}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2.5 shadow-sm hover:shadow-md"
               >
                 {posting ? (
