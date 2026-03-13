@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify
 from execution_engine.whatsapp_bulk_executor import execute_bulk_whatsapp
 from execution_engine.campaign_launch_executor import launch_campaign_generation
 from trend_engine.hybrid_trend_service import update_demand_signal
+from trend_engine.dashboard_service import build_agent_dashboard
 from targeting_engine.targeting_service import get_top_targets
 from execution_engine.bluesky_executor import execute_bluesky_posting
 from execution_engine.vapi_service import create_vapi_call
@@ -297,3 +298,10 @@ def bluesky_posting():
     result = execute_bluesky_posting(data["destinations"])
 
     return jsonify(result)
+
+@campaign_bp.route("/dashboard/travel-intelligence", methods=["GET"])
+def travel_dashboard():
+
+    data = build_agent_dashboard()
+
+    return jsonify(data)
