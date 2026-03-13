@@ -20,6 +20,7 @@ from services.decision_agents import run_multi_agent_decision
 from services.query_bot import run_query_bot
 from services.embedding_service import embed_itinerary
 from services.trip_plan_generator import generate_trip_plan
+from services.conversation_intent_agent import update_intent_state
 from models.trip_plan import TripPlan
 from sqlalchemy import func
 from flask_cors import CORS
@@ -290,6 +291,17 @@ def simulate_itinerary(itinerary_id):
 
     if not result:
         return jsonify({"error": "Itinerary not found"}), 404
+
+    return jsonify(result)
+
+@app.route("/conversation/intent", methods=["POST"])
+def conversation_intent():
+
+    data = request.json
+    session_id = data["session_id"]
+    message = data["message"]
+
+    result = update_intent_state(session_id, message)
 
     return jsonify(result)
 
