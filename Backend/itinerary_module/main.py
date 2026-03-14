@@ -20,6 +20,9 @@ from services.decision_agents import run_multi_agent_decision
 from services.query_bot import run_query_bot
 from services.embedding_service import embed_itinerary
 from services.trip_plan_generator import generate_trip_plan
+from services.conversation_intent_agent import update_intent_state
+from services.itinerary_customization_engine import create_custom_itinerary
+from services.itinerary_edit_agent import extract_edit_intent
 from models.trip_plan import TripPlan
 from sqlalchemy import func
 from flask_cors import CORS
@@ -293,6 +296,17 @@ def simulate_itinerary(itinerary_id):
 
     return jsonify(result)
 
+@app.route("/conversation/intent", methods=["POST"])
+def conversation_intent():
+
+    data = request.json
+    session_id = data["session_id"]
+    message = data["message"]
+
+    result = update_intent_state(session_id, message)
+
+    return jsonify(result)
+
 @app.route("/generate-itinerary-from-text", methods=["POST"])
 def generate_from_text():
 
@@ -374,6 +388,60 @@ def generate_from_text():
             for i in saved
         ],
         "day_wise_plan": trip_plan.structured_plan if trip_plan else None
+    })
+
+@app.route("/itinerary/customize", methods=["POST"])
+def customize_itinerary():
+
+    data = request.json
+
+    trip_id = data["trip_id"]
+    flight_itinerary_id = data["flight_source"]
+    hotel_itinerary_id = data["hotel_source"]
+
+    new_id = create_custom_itinerary(
+        trip_id,
+        flight_itinerary_id,
+        hotel_itinerary_id
+    )
+
+    return jsonify({
+        "new_itinerary_id": str(new_id)
+    })
+
+@app.route("/conversation/itinerary-edit", methods=["POST"])
+def conversation_itinerary_edit():
+
+    data = request.json
+    trip_id = data["trip_id"]
+    message = data["message"]
+
+    # fetch trip itineraries
+    itineraries = Itinerary.query.filter_by(trip_id=trip_id).all()
+
+    itinerary_map = {
+        idx+1: {"itinerary_id": str(it.id)}
+        for idx, it in enumerate(itineraries)
+    }
+
+    # extract intent
+    edit_intent = extract_edit_intent(message, itinerary_map)
+
+    flight_source_number = edit_intent["flight_source"]
+    hotel_source_number = edit_intent["hotel_source"]
+
+    flight_itinerary_id = itinerary_map[flight_source_number]["itinerary_id"]
+    hotel_itinerary_id = itinerary_map[hotel_source_number]["itinerary_id"]
+
+    # call core engine
+    new_itinerary_id = create_custom_itinerary(
+        trip_id,
+        flight_itinerary_id,
+        hotel_itinerary_id
+    )
+
+    return jsonify({
+        "new_itinerary_id": new_itinerary_id
     })
 
 @app.route("/itinerary/<uuid:itinerary_id>/query", methods=["POST"])
