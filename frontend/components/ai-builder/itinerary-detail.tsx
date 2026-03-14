@@ -51,6 +51,41 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
+        // For custom/demo itineraries, check if it's a demo ID
+        if (itinerary.id.includes('custom') || itinerary.id.includes('dummy')) {
+          // Use local itinerary data for custom/demo itineraries
+          setFullData({
+            flight: {
+              airline: "Premier Airlines",
+              flight_number: "PA-101",
+              departure_airport: "DEL",
+              arrival_airport: "BLR",
+              departure_time: "10:00 AM",
+              arrival_time: "01:30 PM",
+              duration_minutes: 180,
+              layover_count: 0,
+              price: Math.floor(itinerary.price * 0.2),
+              travel_class: "Economy",
+              aircraft: "Boeing 737"
+            },
+            hotels: [
+              {
+                name: "Premium Stay Hotel",
+                location: itinerary.destination || "Main City",
+                rating: 4.5,
+                price: Math.floor(itinerary.price * 0.3),
+                amenities: ["WiFi", "AC", "Restaurant", "Gym"],
+                reviews: 250,
+                check_in: "2:00 PM",
+                check_out: "11:00 AM"
+              }
+            ]
+          })
+          setLoading(false)
+          return
+        }
+
+        // For backend itineraries, fetch full details
         const res = await fetch(`http://localhost:5000/itinerary/${itinerary.id}`)
         const data = await res.json()
 
@@ -68,7 +103,7 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
     }
 
     fetchDetails()
-  }, [itinerary.id])
+  }, [itinerary.id, itinerary.destination, itinerary.price])
 
   // Show loading state
   if (loading) {
@@ -100,25 +135,25 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
     aircraft: fullData.flight.aircraft
   }] : []
 
-  const mappedHotels: HotelInfo[] = fullData.hotel ? [{
+  const mappedHotels: HotelInfo[] = (fullData.hotel || fullData.hotels?.[0]) ? [{
     id: "h1",
-    name: fullData.hotel.name,
-    location: fullData.trip.destination,
-    rating: fullData.hotel.rating,
-    price: fullData.hotel.price,
-    nights: fullData.day_wise_plan?.days?.length || 1,
-    amenities: fullData.hotel.amenities || [],
-    image: fullData.hotel.image_url,
-    latitude: Number(fullData.hotel.latitude),
-    longitude: Number(fullData.hotel.longitude),
-    check_in: fullData.hotel.check_in,
-    check_out: fullData.hotel.check_out,
-    hotel_class: fullData.hotel.hotel_class,
-    reviews: fullData.hotel.reviews,
-    inventory_status: fullData.hotel.inventory_status
+    name: (fullData.hotel || fullData.hotels?.[0])?.name || "Premium Hotel",
+    location: (fullData.trip?.destination || itinerary.destination) || "City",
+    rating: (fullData.hotel || fullData.hotels?.[0])?.rating || 4.5,
+    price: (fullData.hotel || fullData.hotels?.[0])?.price || itinerary.price * 0.3,
+    nights: fullData.day_wise_plan?.days?.length || itinerary.duration || 1,
+    amenities: (fullData.hotel || fullData.hotels?.[0])?.amenities || [],
+    image: (fullData.hotel || fullData.hotels?.[0])?.image_url,
+    latitude: Number((fullData.hotel || fullData.hotels?.[0])?.latitude) || 0,
+    longitude: Number((fullData.hotel || fullData.hotels?.[0])?.longitude) || 0,
+    check_in: (fullData.hotel || fullData.hotels?.[0])?.check_in || "2:00 PM",
+    check_out: (fullData.hotel || fullData.hotels?.[0])?.check_out || "11:00 AM",
+    hotel_class: (fullData.hotel || fullData.hotels?.[0])?.hotel_class,
+    reviews: (fullData.hotel || fullData.hotels?.[0])?.reviews,
+    inventory_status: (fullData.hotel || fullData.hotels?.[0])?.inventory_status
   }] : []
 
-  const dayByDay: DayPlan[] = fullData.day_wise_plan?.days?.map((d: any) => ({
+  const dayByDay: DayPlan[] = (fullData.day_wise_plan?.days || itinerary.dayByDay || []).map((d: any) => ({
     day: d.day,
     title: d.title,
     notes: d.notes,
@@ -131,8 +166,8 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
     flights: mappedFlights,
     hotels: mappedHotels,
     dayByDay: dayByDay,
-    price: fullData.total_price,
-    rating: fullData.scores?.final_score ? fullData.scores.final_score * 5 : itinerary.rating,
+    price: fullData.total_price || itinerary.price,
+    rating: fullData.scores?.final_score ? fullData.scores.final_score * 5 : (itinerary.rating || 4.5),
   }
 
   // -----------------------------------------------
@@ -258,25 +293,6 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
 
         {/* LEFT COLUMN */}
         <div className="lg:col-span-2 space-y-6">
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="p-4 border-l-4 border-l-blue-500">
-              <div className="flex items-center gap-2 mb-2">
-                <Plane size={18} className="text-blue-600" />
-                <span className="text-sm font-semibold">Flights</span>
-              </div>
-              <p className="text-3xl font-bold">{fullItinerary.flights.length}</p>
-            </Card>
-
-            <Card className="p-4 border-l-4 border-l-amber-500">
-              <div className="flex items-center gap-2 mb-2">
-                <Hotel size={18} className="text-amber-600" />
-                <span className="text-sm font-semibold">Hotels</span>
-              </div>
-              <p className="text-3xl font-bold">{fullItinerary.hotels.length}</p>
-            </Card>
-          </div>
 
           {/* Tabs */}
           <Tabs defaultValue="flights" className="space-y-4">
