@@ -30,9 +30,9 @@ export function CustomItineraryBuilder({ itineraries, onCustomItineraryGenerated
       content: `🎨 **Create Your Own Custom Itinerary!**
 
 You can now mix and match components from the 3 itineraries above:
-- **Hotels from Itinerary I** (Best Match)
-- **Flights from Itinerary II** (Best Budget)
-- **Activities from Itinerary III** (Best Comfort)
+- **Hotels from Itinerary I**
+- **Flights from Itinerary II**
+- **Activities from Itinerary III**
 - *Or any other combination you like!*
 
 Just describe what you'd like to customize. For example:
@@ -111,37 +111,62 @@ Just let me know which specific changes you'd like to make, and I'll adjust your
       type: 'user',
       content: input,
     }
+
     setMessages((prev) => [...prev, userMessage])
 
     const userInput = input
     setInput('')
     setIsLoading(true)
 
-    // Check if user wants to generate
-    const shouldGenerate = userInput.toLowerCase().includes('create') ||
-      userInput.toLowerCase().includes('generate') ||
-      userInput.toLowerCase().includes('make') ||
-      (userInput.toLowerCase().includes('done') && messages.length > 3) ||
-      userInput.toLowerCase().includes('ready')
+    try {
+      const latest = localStorage.getItem("latestItineraryResponse")
 
-    await new Promise((resolve) => setTimeout(resolve, 800))
+      if (!latest) {
+        throw new Error("No itinerary response found in localStorage")
+      }
 
-    const botResponse = generateBotResponse(userInput)
-    
-    const botMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'bot',
-      content: botResponse,
+      const parsed = JSON.parse(latest)
+      const tripId = parsed.trip_id
+
+      const res = await fetch("http://localhost:5000/conversation/itinerary-edit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          trip_id: tripId,
+          message: userInput
+        })
+      })
+
+      const data = await res.json()
+
+      // ✅ Print the new itinerary ID
+      console.log("New Itinerary ID:", data.new_itinerary_id)
+      const newItinerary: Itinerary = {
+        id: data.new_itinerary_id,
+        type: "best-match", // value doesn't matter much for custom
+        title: "Custom Itinerary",
+        description: "AI-generated itinerary based on your customization",
+        duration: itineraries?.[0]?.duration || 5,
+        price: itineraries?.[0]?.price || 0,
+        rating: 4.5,
+        destination: itineraries?.[0]?.destination || "",
+        highlights: ["Custom Mix", "AI Optimized"],
+        flights: [],
+        hotels: [],
+        dayByDay: [],
+        final_score: 0
+      }
+
+      // 🔥 THIS triggers the UI to show ItineraryDetail
+      onCustomItineraryGenerated(newItinerary)
+
+    } catch (error) {
+      console.error("Error creating custom itinerary:", error)
     }
-    
-    setMessages((prev) => [...prev, botMessage])
+
     setIsLoading(false)
-
-    if (shouldGenerate) {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      const customItinerary = getDummyCustomItinerary()
-      onCustomItineraryGenerated(customItinerary)
-    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -210,11 +235,10 @@ Just let me know which specific changes you'd like to make, and I'll adjust your
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-sm px-4 py-3 rounded-lg ${
-                  message.type === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-foreground border border-border'
-                }`}
+                className={`max-w-sm px-4 py-3 rounded-lg ${message.type === 'user'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground border border-border'
+                  }`}
               >
                 <div className="text-sm leading-relaxed prose prose-sm max-w-none space-y-0">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
