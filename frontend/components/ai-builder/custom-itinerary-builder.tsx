@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Send, Sparkles, Zap } from 'lucide-react'
+import { Send, Sparkles } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { MixComponentsSelector } from './mix-components-selector'
 import type { Itinerary } from '@/app/ai-builder/page'
 
 interface Message {
@@ -188,123 +188,108 @@ Just let me know which specific changes you'd like to make, and I'll adjust your
         </p>
       </div>
 
-      {/* Quick Selection Guide */}
-      <Card className="p-6 bg-primary/5 border-primary/20">
-        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Zap size={18} className="text-primary" />
-          Mix Components From Different Itineraries
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {itineraries.map((it, idx) => (
-            <div key={it.id} className="text-sm space-y-2">
-              <Badge variant="outline" className="bg-white border-primary/30">
-                {it.title}
-              </Badge>
-              <div className="space-y-1 text-muted-foreground text-xs">
-                <p>💰 ₹{it.price?.toLocaleString('en-IN')}</p>
-                <p>📅 {it.duration} days</p>
-                <p>⭐ {(it.final_score ?? 0) * 100}% fit</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {/* Selection Section at Top */}
+      <div>
+        <MixComponentsSelector
+          itineraries={itineraries}
+          onCustomItineraryGenerated={onCustomItineraryGenerated}
+        />
+      </div>
 
-      {/* Chat Card */}
-      <Card className="overflow-hidden flex flex-col max-h-175 bg-card border-border shadow-sm">
-        {/* Header */}
-        <div className="bg-primary/5 border-b border-border p-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Sparkles size={20} className="text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground">Customize Your Itinerary</h3>
-              <p className="text-sm text-muted-foreground">
-                Tell us what you'd like to change
-              </p>
+      {/* Chat Section at Bottom */}
+      <div className="space-y-4">
+        <Card className="overflow-hidden flex flex-col max-h-175 bg-card border-border shadow-sm">
+          {/* Header */}
+          <div className="bg-primary/5 border-b border-border p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Sparkles size={18} className="text-primary" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Customize via Chat</h3>
+                <p className="text-xs text-muted-foreground">
+                  Tell us what you'd like to change
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-background">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-background">
+            {messages.map((message) => (
               <div
-                className={`max-w-sm px-4 py-3 rounded-lg ${message.type === 'user'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-foreground border border-border'
-                  }`}
+                key={message.id}
+                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className="text-sm leading-relaxed prose prose-sm max-w-none space-y-0">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {message.content}
-                  </ReactMarkdown>
+                <div
+                  className={`max-w-xs px-4 py-3 rounded-lg text-sm ${message.type === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-foreground border border-border'
+                    }`}
+                >
+                  <div className="leading-relaxed prose prose-sm max-w-none space-y-0">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-muted border border-border px-4 py-3 rounded-lg">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                  <div
-                    className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                    style={{ animationDelay: '0.1s' }}
-                  />
-                  <div
-                    className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
-                    style={{ animationDelay: '0.2s' }}
-                  />
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-muted border border-border px-4 py-3 rounded-lg">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div ref={scrollRef} />
-        </div>
+            <div ref={scrollRef} />
+          </div>
 
-        {/* Input Area */}
-        <div className="border-t border-border p-4 bg-muted/30">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleSendMessage()
-            }}
-            className="flex gap-2"
-          >
-            <Input
-              placeholder={
-                isLoading
-                  ? 'Please wait...'
-                  : 'Describe your custom preferences or say "create custom itinerary"...'
-              }
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              className="flex-1 text-base bg-background"
-            />
-            <Button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="gap-2 bg-primary hover:bg-primary/90"
+          {/* Input Area */}
+          <div className="border-t border-border p-3 bg-muted/30">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleSendMessage()
+              }}
+              className="flex gap-2"
             >
-              <Send size={18} />
-              Send
-            </Button>
-          </form>
-          <p className="text-xs text-muted-foreground mt-2">
-            💡 You can mix hotels, flights, activities, and more from the itineraries above!
-          </p>
-        </div>
-      </Card>
+              <Input
+                placeholder={
+                  isLoading
+                    ? 'Please wait...'
+                    : 'Describe changes...'
+                }
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isLoading}
+                className="flex-1 text-sm bg-background"
+              />
+              <Button
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                className="gap-2 bg-primary hover:bg-primary/90 px-3"
+                size="sm"
+              >
+                <Send size={16} />
+              </Button>
+            </form>
+          </div>
+        </Card>
+      </div>
     </section>
   )
 }

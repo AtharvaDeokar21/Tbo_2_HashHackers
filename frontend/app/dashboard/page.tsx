@@ -6,6 +6,13 @@ import { Header } from '@/components/layout/header'
 import { DashboardWrapper } from '@/components/layout/dashboard-wrapper'
 import { TravelNewsCard } from '@/components/dashboard/travel-news-card'
 import { TrendingDestinationCard } from '@/components/dashboard/trending-destination-card'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from '@/components/ui/carousel'
 
 type TravelNews = {
   link: string
@@ -56,9 +63,9 @@ export default function Dashboard() {
       <DashboardWrapper>
 
         {/* Welcome Section */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-foreground tracking-tight">Travel Dashboard</h1>
-          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+        <div className="mb-12">
+          <h1 className="text-3xl font-semibold text-foreground tracking-tight">Travel Dashboard</h1>
+          <p className="text-muted-foreground mt-3 text-base leading-relaxed font-light">
             Discover trending destinations and stay updated with the latest travel insights
           </p>
         </div>
@@ -72,30 +79,40 @@ export default function Dashboard() {
           <>
             {/* Trending Destinations Section */}
             <section className="mb-16">
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-1 h-6 bg-gradient-to-b from-orange-500 to-orange-400 dark:from-orange-400 dark:to-orange-500 rounded-full"></div>
-                <h2 className="text-xl font-semibold text-foreground tracking-wide">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-0.5 h-5 bg-neutral-300 dark:bg-neutral-700"></div>
+                <h2 className="text-lg font-semibold text-foreground tracking-normal">
                   Trending Destinations
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {data.trending_destinations.map((destination, index) => (
-                  <TrendingDestinationCard key={index} destination={destination} />
-                ))}
+              <div className="relative group">
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {data.trending_destinations.map((destination, index) => (
+                      <CarouselItem key={index} className="basis-full sm:basis-1/2 md:basis-1/3">
+                        <div className="px-2">
+                          <TrendingDestinationCard destination={destination} />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors" />
+                  <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors" />
+                </Carousel>
               </div>
             </section>
 
             {/* Travel News Section */}
             <section>
-              <div className="flex items-center gap-2.5 mb-6">
-                <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-blue-400 dark:from-blue-400 dark:to-blue-500 rounded-full"></div>
-                <h2 className="text-xl font-semibold text-foreground tracking-wide">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-0.5 h-5 bg-neutral-300 dark:bg-neutral-700"></div>
+                <h2 className="text-lg font-semibold text-foreground tracking-normal">
                   Travel News & Trends
                 </h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {data.travel_news.map((news, index) => (
                   <TravelNewsCard key={index} news={news} />
                 ))}
