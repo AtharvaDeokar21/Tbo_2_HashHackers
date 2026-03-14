@@ -36,17 +36,29 @@ def launch_campaign_generation(agent_id, destination):
     print("\n=== FINAL PROMPT ===")
     print(prompt)
 
-    # STEP 4 — Call LLM
-    raw_output = generate_campaign_content(prompt)
+    attempts = 0
+    campaign_blueprint = None
 
-    print("\n=== RAW LLM OUTPUT ===")
-    print(raw_output)
+    while attempts < 2:
+        attempts += 1
 
-    try:
-        campaign_blueprint = json.loads(raw_output)
-    except Exception as e:
-        print("JSON parsing failed:", e)
-        raise Exception("Invalid JSON returned from LLM")
+        print(f"\n=== LLM CALL ATTEMPT {attempts} ===")
+
+        raw_output = generate_campaign_content(prompt)
+
+        print("\n=== RAW LLM OUTPUT ===")
+        print(raw_output)
+
+        try:
+            campaign_blueprint = json.loads(raw_output)
+            break
+        except Exception as e:
+            print("JSON parsing failed:", e)
+
+            if attempts >= 2:
+                raise Exception("Invalid JSON returned from LLM after retry")
+
+            print("Retrying LLM generation due to invalid JSON...")
 
     # STEP 5 — Generate Creative
     creative_context = {
