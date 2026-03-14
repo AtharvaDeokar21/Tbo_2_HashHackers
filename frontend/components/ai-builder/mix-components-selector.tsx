@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +26,7 @@ export function MixComponentsSelector({
 
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState('')
+  const [detailedItineraries, setDetailedItineraries] = useState<Record<string, any>>({})
 
   // Calculate custom price
   const customPrice = useMemo(() => {
@@ -121,6 +122,40 @@ export function MixComponentsSelector({
     }
   }
 
+
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        const latest = localStorage.getItem("latestItineraryResponse")
+        if (!latest) return
+
+        const parsed = JSON.parse(latest)
+
+        const ids = parsed.itineraries.map((it: any) => it.itinerary_id)
+
+        const results: Record<string, any> = {}
+
+        await Promise.all(
+          ids.map(async (id: string) => {
+            const res = await fetch(`http://localhost:5000/itinerary/${id}`)
+            if (!res.ok) return
+
+            const data = await res.json()
+            results[id] = data
+          })
+        )
+
+        setDetailedItineraries(results)
+
+      } catch (err) {
+        console.error("Failed to fetch itinerary details", err)
+      }
+    }
+
+    fetchDetails()
+  }, [])
+
   return (
     <Card className="border-primary/20 bg-background overflow-hidden shadow-sm">
       {/* Header */}
@@ -153,34 +188,54 @@ export function MixComponentsSelector({
 
           <div className="grid grid-cols-1 gap-3">
             {itineraries.map((it) => {
+              const details = detailedItineraries[it.id]
+              const flight = details?.flight
               const isSelected = selectedComponents.flightSource === it.id
-              const flightPrice = (it.price * 0.2)
+              const flightPrice = flight?.price ?? (it.price * 0.2)
 
               return (
                 <Card
                   key={`flight-${it.id}`}
-                  className={`p-4 cursor-pointer transition-all duration-200 border-2 ${
-                    isSelected
-                      ? 'border-sky-500 bg-sky-50 shadow-md'
-                      : 'border-border hover:border-sky-300 bg-background hover:bg-sky-50/30'
-                  }`}
+                  className={`p-4 cursor-pointer transition-all duration-200 border-2 ${isSelected
+                    ? 'border-sky-500 bg-sky-50 shadow-md'
+                    : 'border-border hover:border-sky-300 bg-background hover:bg-sky-50/30'
+                    }`}
                   onClick={() => handleSelectFlight(it.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className={`p-2 rounded-lg transition-all ${
-                        isSelected 
-                          ? 'bg-sky-500/20' 
-                          : 'bg-sky-500/10'
-                      }`}>
+                      <div className={`p-2 rounded-lg transition-all ${isSelected
+                        ? 'bg-sky-500/20'
+                        : 'bg-sky-500/10'
+                        }`}>
                         <Plane size={16} className="text-sky-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-foreground mb-1">
                           {it.title}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>₹{flightPrice.toLocaleString('en-IN')}</span>
+                        <div className="flex flex-col text-xs text-muted-foreground">
+                          {flight ? (
+                            <>
+                              <span className="font-medium text-foreground">
+                                {flight.airline} • {flight.flight_number}
+                              </span>
+
+                              <span>
+                                {flight.departure_airport} → {flight.arrival_airport}
+                              </span>
+
+                              <span>
+                                {flight.departure_time} → {flight.arrival_time}
+                              </span>
+
+                              <span className="font-semibold text-sky-700">
+                                ₹{flight.price?.toLocaleString('en-IN')}
+                              </span>
+                            </>
+                          ) : (
+                            <span>Loading flight details...</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -208,33 +263,41 @@ export function MixComponentsSelector({
           <div className="grid grid-cols-1 gap-3">
             {itineraries.map((it) => {
               const isSelected = selectedComponents.hotelSource === it.id
+              const details = detailedItineraries[it.id]
+              const hotel = details?.hotel || details?.hotels?.[0]
               const hotelPrice = (it.price * 0.3)
 
               return (
                 <Card
                   key={`hotel-${it.id}`}
-                  className={`p-4 cursor-pointer transition-all duration-200 border-2 ${
-                    isSelected
-                      ? 'border-amber-500 bg-amber-50 shadow-md'
-                      : 'border-border hover:border-amber-300 bg-background hover:bg-amber-50/30'
-                  }`}
+                  className={`p-4 cursor-pointer transition-all duration-200 border-2 ${isSelected
+                    ? 'border-amber-500 bg-amber-50 shadow-md'
+                    : 'border-border hover:border-amber-300 bg-background hover:bg-amber-50/30'
+                    }`}
                   onClick={() => handleSelectHotel(it.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-start gap-3 flex-1">
-                      <div className={`p-2 rounded-lg transition-all ${
-                        isSelected 
-                          ? 'bg-amber-500/20' 
-                          : 'bg-amber-500/10'
-                      }`}>
+                      <div className={`p-2 rounded-lg transition-all ${isSelected
+                        ? 'bg-amber-500/20'
+                        : 'bg-amber-500/10'
+                        }`}>
                         <Building2 size={16} className="text-amber-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-foreground mb-1">
                           {it.title}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>₹{hotelPrice.toLocaleString('en-IN')}</span>
+                        <div className="flex flex-col text-xs text-muted-foreground">
+                          {hotel ? (
+                            <>
+                              <span>{hotel.name}</span>
+                              <span>⭐ {hotel.rating}</span>
+                              <span>₹{hotel.price?.toLocaleString('en-IN')}</span>
+                            </>
+                          ) : (
+                            <span>Loading hotel details...</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -295,14 +358,7 @@ export function MixComponentsSelector({
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-primary/10">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Total Estimated Price:</span>
-                  <span className="text-lg font-bold text-primary">
-                    ₹{customPrice.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
+              
             </div>
 
             <Button

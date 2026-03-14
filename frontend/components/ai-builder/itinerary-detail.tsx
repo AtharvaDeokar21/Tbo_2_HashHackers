@@ -175,10 +175,10 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
   return (
     <div className="space-y-8">
       {/* Back Button */}
-      <Button variant="outline" size="sm" onClick={onBack} className="flex items-center gap-1 mb-4">
+      {/* <Button variant="outline" size="sm" onClick={onBack} className="flex items-center gap-1 mb-4">
         <ArrowLeft size={16} />
         Back to Itineraries
-      </Button>
+      </Button> */}
 
       {/* ---- HERO SECTION stays same ---- */}
       <Card className="overflow-hidden border-0 shadow-md">
@@ -198,9 +198,7 @@ export function ItineraryDetail({ itinerary, onBack }: ItineraryDetailProps) {
 
             {/* LEFT SECTION */}
             <div className="space-y-3 flex-1">
-              <Badge className="bg-primary/20 text-primary border-0 font-semibold">
-                {fullItinerary.type.replace('-', ' ').toUpperCase()}
-              </Badge>
+              
 
               <h1 className="text-3xl font-bold text-foreground">{fullItinerary.title}</h1>
               <p className="text-foreground/80">{fullItinerary.description}</p>
