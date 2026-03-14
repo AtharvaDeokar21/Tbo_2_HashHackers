@@ -292,10 +292,10 @@ def bluesky_posting():
 
     data = request.json
 
-    if not data or not data.get("destinations"):
-        return jsonify({"error": "destinations required"}), 400
+    if not data or not data.get("destinations") or not data.get("agent_id"):
+        return jsonify({"error": "destinations and agent_id required"}), 400
 
-    result = execute_bluesky_posting(data["destinations"])
+    result = execute_bluesky_posting(data["destinations"], data["agent_id"])
 
     return jsonify(result)
 

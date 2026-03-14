@@ -14,8 +14,8 @@ Margin Strength: {data['margin_score']}
 Return structured JSON with:
 
 1. campaign_identity (string)  
-   - This must be ONLY the campaign title.   
-   - Do NOT return an object.  
+   - This must be ONLY the campaign title. 
+   - Do NOT return an object.
    - Do NOT include tagline, objective, KPIs, or any nested fields.
 2. positioning_angle
 3. emotional_hook

@@ -32,7 +32,7 @@ def compress_image(input_path, max_size=1_000_000):
 
     return output_path
 
-def process_single_destination(destination):
+def process_single_destination(destination, agent_id):
 
     result = {
         "destination": destination,
@@ -54,6 +54,8 @@ def process_single_destination(destination):
             trend_data["final_score"],
             segment
         )
+
+        caption += "\n Click the link to submit details and get personalized offers! \n localhost:3000/new-customer/" + agent_id
 
         result["caption"] = caption
 
@@ -87,13 +89,13 @@ def process_single_destination(destination):
     return result
 
 
-def execute_bluesky_posting(destinations):
+def execute_bluesky_posting(destinations, agent_id):
 
     results = []
 
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
-            executor.submit(process_single_destination, d): d
+            executor.submit(process_single_destination, d, agent_id): d
             for d in destinations
         }
 

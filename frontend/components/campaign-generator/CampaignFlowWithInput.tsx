@@ -10,9 +10,11 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Loader, MapPin, Lightbulb, Users, Target, Star, Rocket, AlertCircle, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { useCity } from "@/components/campaign-generator/cityContext"
 
 export default function CampaignFlowWithInput() {
   const [city, setCity] = useState('')
+  const { updateCity } = useCity()
   const [loading, setLoading] = useState(false)
 
   // 7-day plan for CampaignFlowTabs
@@ -101,7 +103,7 @@ export default function CampaignFlowWithInput() {
     }
 
     setLoading(false)
-    localStorage.setItem("city", city)
+    updateCity(city)
     
   }
 

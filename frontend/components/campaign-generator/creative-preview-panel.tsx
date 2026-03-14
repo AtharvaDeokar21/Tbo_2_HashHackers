@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { toast } from "sonner"
 import Image from 'next/image'
 import { PiButterflyFill } from "react-icons/pi"
+import { useCity } from "@/components/campaign-generator/cityContext"
 
 interface CreativePreviewPanelProps {
   campaignName: string
@@ -38,6 +39,7 @@ export function CreativePreviewPanel({
   const [calling, setCalling] = useState(false)
   const [callResult, setCallResult] = useState<any>(null)
   const [executionMetrics, setExecutionMetrics] = useState({ bluesky: 0, whatsapp: 0, calls: 0 })
+  const { city } = useCity()
 
   const handleSendWhatsApp = async () => {
     try {
@@ -103,7 +105,7 @@ export function CreativePreviewPanel({
       const res = await fetch("http://localhost:5001/api/execution/bluesky", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destinations: [localStorage.getItem("city")] })
+        body: JSON.stringify({ destinations: [localStorage.getItem("city")], agent_id: localStorage.getItem("selectedAgent")})
       })
 
       const data = await res.json()
@@ -302,7 +304,7 @@ export function CreativePreviewPanel({
                   placeholder="Enter destinations (e.g., London, Bali, Dubai, Paris)..."
                   className="w-full px-4 py-2.5 border border-border/60 rounded-lg bg-background text-foreground text-sm font-medium focus:ring-2 focus:ring-blue-500/40 outline-none transition-all"
                 /> */}
-                <p className="text-xs font-bold text-foreground mt-2">{localStorage.getItem("city") || "No city selected"}</p>
+                <p className="text-xs font-bold text-foreground mt-2">{city || "No city selected"}</p>
               </div>
 
               <button
@@ -311,7 +313,7 @@ export function CreativePreviewPanel({
                     destInput.split(",").map(d => d.trim()).filter(Boolean)
                   )
                 }
-                disabled={posting || !localStorage.getItem("city")}
+                disabled={posting || !city}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2.5 shadow-sm hover:shadow-md"
               >
                 {posting ? (
@@ -358,13 +360,13 @@ export function CreativePreviewPanel({
 
                 {/* Image Section */}
                 {blueskyResult.image_url && (
-                  <div className="w-full bg-black aspect-[4/3] flex items-center justify-center relative overflow-hidden">
+                  <div className="w-full bg-white aspect-[4/3] flex items-center justify-center relative overflow-hidden">
                     <Image
                       src={blueskyResult.image_url}
                       alt="Post"
                       width={400}
                       height={300}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      className="w-full h-auto object-cover hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                 )}
