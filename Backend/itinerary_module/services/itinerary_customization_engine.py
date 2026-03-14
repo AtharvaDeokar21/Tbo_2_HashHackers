@@ -17,7 +17,7 @@ def create_custom_itinerary(trip_id, flight_itinerary_id, hotel_itinerary_id):
     if not flight or not hotel:
         return None
 
-    total_price = float(flight.price) + float(hotel.price)
+    total_price = float(flight.price) + float(hotel.total_price)
 
     # create itinerary row
     new_itinerary = Itinerary(
